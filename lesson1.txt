@@ -1,0 +1,100 @@
+I'd like to talk about the main problem we are trying to solve.
+I'm afraid we don't have enough evidence to make that decision yet.
+The way I see it, there are two main reasons for this.
+What matters most to me is the total number of uncovers per request.
+From the customer's point of view, the process should be as simple as possible.
+I'm not convinced that a 40% target is realistic at this stage.
+Before we set a target, we need to establish a baseline.
+If we have enough data, we can make a much better decision.
+I find it hard to believe that this change alone will double conversion.
+The underlying assumption is that better matching will increase customer satisfaction.
+What is the main assumption behind this model?
+How would you validate that assumption?
+We need to pressure-test this idea before we roll it out to everyone.
+It's too early to tell whether the new model improves retention.
+That's still an open question.
+We don't have enough evidence yet to draw a conclusion.
+My working hypothesis is that fewer, better-matched notifications will increase engagement.
+I'm looking forward to hearing what the customers think about it.
+We've chosen five categories for the first pilot.
+We should avoid making these mistakes again.
+There is a clear trade-off between monetization and customer experience.
+We shouldn't increase revenue at the expense of customer satisfaction.
+The upside is higher monetization, but the downside is lower engagement.
+The main concern is that free recommendations could cannibalize paid uncovers.
+What is the worst-case scenario if this experiment fails?
+What would be an acceptable downside?
+That's a risk I'm willing to take.
+That's not a risk I'm comfortable with.
+We need to set a guardrail for monetization.
+I would accept a small decline in the short term if the long-term impact is positive.
+What threshold would you use to stop the experiment?
+How much of a decline would you consider acceptable?
+I want to understand whether the change has a meaningful impact on customer behavior.
+We need to isolate the effect of the new matching algorithm.
+There may be too much noise in the data to draw a conclusion yet.
+One unusual week could skew the results.
+We should track this metric over time rather than judge it after a few days.
+Which metric is the strongest predictor of retention?
+Is this result statistically significant or only directionally positive?
+We need to benchmark the new system against the current one.
+The question we need to answer is whether better matching leads to more uncovers.
+It comes down to whether customers find the recommended providers useful.
+The real issue is not the number of providers but the quality of the match.
+What I'm trying to say is that the request should be the starting point of the funnel.
+What I mean by that is that one request can involve several providers.
+In other words, provider-level conversion can be misleading.
+More specifically, the conversion rate depends partly on how many providers we show.
+Does this assumption still hold if we increase the number of providers from three to five?
+How would the result change if we looked at the request level instead?
+I don't see a strong case for measuring the funnel only from the provider's perspective.
+Our goal is to become the clear market leader, not just one of the largest players.
+The value proposition needs to be obvious from the first interaction.
+We need to remove friction from the onboarding process.
+Where is the biggest friction point in the current customer journey?
+The profile-completion step may be a bottleneck.
+We need to address the root cause rather than work around the problem.
+What is the root cause of the low response rate?
+We can pilot this approach before we scale it up.
+If the pilot works, we can roll it out gradually.
+We should phase out the old process only after the new one has proved itself.
+We still need to iron out a few issues before the full launch.
+The first version doesn't need to be perfect; we can iterate on it.
+We should fine-tune the ranking model based on real user behavior.
+What edge cases do we need to consider before launch?
+Which use case creates the most value for the customer?
+The proof of concept should tell us whether the idea is technically feasible.
+The next logical step is to test it with real customers.
+Before we commit to this, I want to see stronger evidence.
+What would give you enough confidence to move forward?
+I wouldn't take the current conversion rate for granted.
+I'm leaning toward the second option, but I haven't made a final decision yet.
+My preference would be to start with a smaller experiment.
+If I had to choose, I'd prioritize monetization over provider engagement at this stage.
+For now, I'd focus on the upper part of the funnel.
+Longer term, we should optimize the entire customer journey.
+What would make you change your mind?
+My current view is that phone calls should remain the primary contact channel.
+I wouldn't rule out WhatsApp as an additional channel.
+Do we have a strong enough case to build this technology internally?
+What are the trade-offs between building it ourselves and using a third-party platform?
+The new product is gaining traction, but we still need to understand retention.
+What could cause us to lose momentum?
+The new dashboard should help drive engagement during the first few weeks.
+Which actions are most likely to boost retention?
+We need to understand which behaviors correlate with long-term retention.
+A good onboarding process should move the needle on activation.
+If this doesn't move the needle, we should reconsider the approach.
+The experiment fell short of the target, but the result was still informative.
+We met the target on conversion but missed it on monetization.
+What would need to happen for us to exceed the target?
+The team delivered good results despite the short timeframe.
+I don't get enough feedback from customers to know why they leave.
+We should discuss this with the product team before making a decision.
+I want the manager to recommend one option, not just present three alternatives.
+Why do you believe this is the best option?
+What evidence supports your recommendation?
+A good manager should be able to explain the reasoning behind the decision.
+If the results don't improve, we'll need to reconsider our approach.
+I'm not sure this assumption holds once we scale the system.
+Before we move forward, let's make sure we're solving the right problem.

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="Hands-free Business English listen-and-repeat trainer." />
+  <title>CEO English Ride Trainer</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Business English</p>
+        <h1>Ride Trainer</h1>
+      </div>
+      <button id="installBtn" class="ghost" hidden>Install</button>
+    </header>
+
+    <section class="card lesson-card">
+      <div class="lesson-row">
+        <div>
+          <span class="label">Lesson</span>
+          <strong id="lessonName">No lesson loaded</strong>
+          <span id="lessonMeta" class="muted"></span>
+        </div>
+        <label class="file-button">
+          Import lesson
+          <input id="lessonFile" type="file" accept=".txt,text/plain" hidden />
+        </label>
+      </div>
+      <p class="small">TXT format: one sentence per line. The filename becomes the lesson ID.</p>
+    </section>
+
+    <section class="card status-card">
+      <div class="progress-row">
+        <span id="counter">—</span>
+        <span id="phaseLabel">Ready</span>
+      </div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <p id="sentenceText" class="sentence">Import a lesson or use the bundled lesson1.txt.</p>
+      <div class="timer-wrap">
+        <div id="timer" class="timer">—</div>
+        <div id="timerHint" class="timer-hint">Press Start before your ride</div>
+      </div>
+    </section>
+
+    <section class="controls primary-controls" aria-label="Playback controls">
+      <button id="prevBtn" aria-label="Previous sentence">⏮</button>
+      <button id="playBtn" class="play" aria-label="Start or pause">▶</button>
+      <button id="repeatBtn" aria-label="Repeat sentence">↻</button>
+      <button id="nextBtn" aria-label="Next sentence">⏭</button>
+    </section>
+
+    <section class="controls rating-controls">
+      <button id="easyBtn" class="secondary">Easy</button>
+      <button id="hardBtn" class="secondary">Hard</button>
+    </section>
+
+    <details class="card settings" open>
+      <summary>Training settings</summary>
+
+      <label>
+        English voice
+        <select id="voiceSelect"></select>
+      </label>
+      <div class="row compact">
+        <button id="testVoiceBtn" class="secondary">Test voice</button>
+        <span id="voiceInfo" class="muted small"></span>
+      </div>
+
+      <label>
+        Speech rate
+        <div class="range-row">
+          <input id="speechRate" type="range" min="0.65" max="1.25" step="0.05" value="0.9" />
+          <output id="speechRateValue">0.90×</output>
+        </div>
+      </label>
+
+      <label>
+        Repetitions
+        <select id="repetitionCount">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+        </select>
+      </label>
+
+      <label>
+        Pause per repetition
+        <select id="pauseSeconds">
+          <option value="5">5 s</option>
+          <option value="7" selected>7 s</option>
+          <option value="9">9 s</option>
+          <option value="12">12 s</option>
+          <option value="15">15 s</option>
+        </select>
+      </label>
+
+      <label class="check"><input id="beepEnabled" type="checkbox" checked /> Beep between repetition windows</label>
+      <label class="check"><input id="shuffleEnabled" type="checkbox" /> Shuffle order</label>
+      <label class="check"><input id="hardOnly" type="checkbox" /> Difficult sentences only</label>
+      <label class="check"><input id="wakeLockEnabled" type="checkbox" checked /> Keep screen awake during training</label>
+    </details>
+
+    <details class="card settings">
+      <summary>Progress & data</summary>
+      <div class="button-grid">
+        <button id="exportProgressBtn" class="secondary">Export progress JSON</button>
+        <label class="file-button secondary-like">
+          Import progress JSON
+          <input id="progressFile" type="file" accept=".json,application/json" hidden />
+        </label>
+        <button id="resetProgressBtn" class="danger-link">Reset current lesson progress</button>
+      </div>
+      <div id="stats" class="stats"></div>
+    </details>
+
+    <section class="card help">
+      <h2>Ride mode</h2>
+      <p>The app speaks one sentence, waits for your repetitions, optionally beeps between repetition windows, and moves to the next sentence automatically.</p>
+      <p><strong>Headset controls:</strong> Play/Pause, Previous and Next are registered through the browser Media Session API when supported. Browser/headset support varies.</p>
+      <p><strong>Offline:</strong> the PWA shell and imported lesson are stored locally. TTS can work offline when the selected English voice is installed on your phone. Keep the screen awake for the most reliable ride session.</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
