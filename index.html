@@ -58,6 +58,7 @@
     <section class="controls rating-controls">
       <button id="easyBtn" class="secondary">Easy</button>
       <button id="hardBtn" class="secondary">Hard</button>
+      <button id="rideScreenBtn" class="secondary">Ride screen</button>
     </section>
 
     <details class="card settings" open>
@@ -122,10 +123,19 @@
     <section class="card help">
       <h2>Ride mode</h2>
       <p>The app speaks one sentence, waits for your repetitions, optionally beeps between repetition windows, and moves to the next sentence automatically.</p>
+      <p><strong>Manual navigation:</strong> Repeat, Previous and Next immediately start continuous playback. The manually selected sentence gets 2 extra seconds in each repetition window.</p>
       <p><strong>Headset controls:</strong> Play/Pause, Previous and Next are registered through the browser Media Session API when supported. Browser/headset support varies.</p>
-      <p><strong>Offline:</strong> the PWA shell and imported lesson are stored locally. TTS can work offline when the selected English voice is installed on your phone. Keep the screen awake for the most reliable ride session.</p>
+      <p><strong>Screen lock:</strong> browser TTS may be suspended by Android when the phone is actually locked. For the most reliable ride session, keep <em>Keep screen awake</em> enabled and use <strong>Ride screen</strong>, which keeps the page active with an almost-black display.</p>
+      <p><strong>Offline:</strong> the PWA shell and imported lesson are stored locally. TTS can work offline when the selected English voice is installed on your phone.</p>
     </section>
   </main>
+
+  <div id="rideOverlay" class="ride-overlay" hidden role="button" tabindex="0" aria-label="Exit ride screen">
+    <div class="ride-overlay-content">
+      <div class="ride-dot"></div>
+      <div id="rideOverlayStatus">Ride screen · tap to exit</div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

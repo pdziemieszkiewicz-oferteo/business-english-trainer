@@ -13,7 +13,8 @@
     repetitionCount: $('repetitionCount'), pauseSeconds: $('pauseSeconds'), beepEnabled: $('beepEnabled'),
     shuffleEnabled: $('shuffleEnabled'), hardOnly: $('hardOnly'), wakeLockEnabled: $('wakeLockEnabled'),
     exportProgressBtn: $('exportProgressBtn'), progressFile: $('progressFile'), resetProgressBtn: $('resetProgressBtn'),
-    stats: $('stats'), installBtn: $('installBtn')
+    stats: $('stats'), installBtn: $('installBtn'),
+    rideScreenBtn: $('rideScreenBtn'), rideOverlay: $('rideOverlay'), rideOverlayStatus: $('rideOverlayStatus')
   };
 
   const STORE_KEY = 'ceoEnglishRideTrainerV2';
@@ -29,6 +30,7 @@
   let deferredInstallPrompt = null;
   let audioCtx = null;
   let voices = [];
+  const MANUAL_REPLAY_BONUS_SECONDS = 2;
 
   function defaultState() {
     return {
@@ -205,16 +207,19 @@
     p.totalPlays = (p.totalPlays || 0) + 1; p.lastPracticedAt = new Date().toISOString(); saveState(); updateStats();
   }
 
-  async function runCurrentSentence() {
+  async function runCurrentSentence(options = {}) {
     const s = currentSentence(); if (!s) { stopTraining('No sentences to practise'); return; }
     const token = ++currentAbort;
     setPhase('Listening', 'Listen carefully'); els.timer.textContent = '♪';
     try { await speak(s.text); } catch (err) { setPhase('TTS error', String(err)); stopTraining(); return; }
     if (token !== currentAbort || !running) return;
     markPlayed(s);
-    const reps = Number(state.settings.repetitions), pause = Number(state.settings.pauseSeconds) * 1000;
+    const reps = Number(state.settings.repetitions);
+    const pauseBonusSeconds = Number(options.pauseBonusSeconds || 0);
+    const pause = (Number(state.settings.pauseSeconds) + pauseBonusSeconds) * 1000;
     for (let rep = 1; rep <= reps; rep++) {
-      setPhase(`Repeat ${rep}/${reps}`, 'Say the sentence aloud');
+      const bonusHint = pauseBonusSeconds ? ` · +${pauseBonusSeconds}s` : '';
+      setPhase(`Repeat ${rep}/${reps}`, `Say the sentence aloud${bonusHint}`);
       const status = await sleep(pause, token); if (status === 'aborted') return;
       if (rep < reps) beep();
     }
@@ -241,23 +246,38 @@
     if (hint) els.timerHint.textContent = hint;
   }
 
-  async function repeatCurrent() {
-    if (!lesson) return;
-    stopTraining(); running = true; paused = false;
+  async function startManualPlaybackAtCurrent() {
+    stopTraining();
+    running = true;
+    paused = false;
     if (state.settings.wakeLock) await requestWakeLock();
-    setPlayIcon(); runCurrentSentence();
+    setPlayIcon();
+    runCurrentSentence({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
+  }
+
+  async function repeatCurrent() {
+    if (!lesson || !queue.length) return;
+    await startManualPlaybackAtCurrent();
   }
   async function nextSentence() {
     if (!queue.length) return;
-    const continuePlaying = running && !paused;
-    stopTraining(); queuePos = Math.min(queue.length - 1, queuePos + 1); updateUI();
-    if (continuePlaying) { running = true; if (state.settings.wakeLock) await requestWakeLock(); setPlayIcon(); runCurrentSentence(); }
+    stopTraining();
+    queuePos = Math.min(queue.length - 1, queuePos + 1);
+    updateUI();
+    running = true; paused = false;
+    if (state.settings.wakeLock) await requestWakeLock();
+    setPlayIcon();
+    runCurrentSentence({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
   async function prevSentence() {
     if (!queue.length) return;
-    const continuePlaying = running && !paused;
-    stopTraining(); queuePos = Math.max(0, queuePos - 1); updateUI();
-    if (continuePlaying) { running = true; if (state.settings.wakeLock) await requestWakeLock(); setPlayIcon(); runCurrentSentence(); }
+    stopTraining();
+    queuePos = Math.max(0, queuePos - 1);
+    updateUI();
+    running = true; paused = false;
+    if (state.settings.wakeLock) await requestWakeLock();
+    setPlayIcon();
+    runCurrentSentence({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
 
   function rateCurrent(kind) {
@@ -274,6 +294,22 @@
   }
   async function releaseWakeLock() { try { await wakeLock?.release(); } catch {} wakeLock = null; }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && running && state.settings.wakeLock) requestWakeLock(); });
+
+  async function enterRideScreen() {
+    if (!els.rideOverlay) return;
+    els.rideOverlay.hidden = false;
+    els.rideOverlayStatus.textContent = running ? 'Training is running · tap to exit' : 'Ride screen · tap to exit';
+    if (state.settings.wakeLock) await requestWakeLock();
+    try {
+      if (document.documentElement.requestFullscreen && !document.fullscreenElement) await document.documentElement.requestFullscreen();
+    } catch {}
+  }
+
+  async function exitRideScreen() {
+    if (!els.rideOverlay) return;
+    els.rideOverlay.hidden = true;
+    try { if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen(); } catch {}
+  }
 
   function exportProgress() {
     if (!lesson) return;
@@ -347,6 +383,7 @@
   els.lessonFile.addEventListener('change', async () => { const f = els.lessonFile.files?.[0]; if (f) await importLessonFile(f); els.lessonFile.value = ''; });
   els.progressFile.addEventListener('change', async () => { const f = els.progressFile.files?.[0]; if (f) { try { await importProgressFile(f); alert('Progress imported.'); } catch(e) { alert(`Could not import progress: ${e.message}`); } } els.progressFile.value = ''; });
   els.playBtn.addEventListener('click', startTraining); els.repeatBtn.addEventListener('click', repeatCurrent); els.nextBtn.addEventListener('click', nextSentence); els.prevBtn.addEventListener('click', prevSentence);
+  els.rideScreenBtn?.addEventListener('click', enterRideScreen); els.rideOverlay?.addEventListener('click', exitRideScreen);
   els.easyBtn.addEventListener('click', () => rateCurrent('easy')); els.hardBtn.addEventListener('click', () => rateCurrent('hard'));
   els.exportProgressBtn.addEventListener('click', exportProgress); els.resetProgressBtn.addEventListener('click', resetProgress);
   els.testVoiceBtn.addEventListener('click', () => speak('Before we set a target, we need to establish a baseline.').catch(() => {}));
