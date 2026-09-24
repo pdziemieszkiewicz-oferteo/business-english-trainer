@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f172a" />
   <meta name="description" content="Hands-free Business English trainer with Repeat, Active Recall and Business Response modes." />
-  <title>CEO English Ride Trainer</title>
+  <title>CEO English Ride Trainer v5</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
@@ -15,15 +15,38 @@
     <header class="topbar">
       <div>
         <p class="eyebrow">Business English</p>
-        <h1>Ride Trainer</h1>
+        <h1>Ride Trainer <span class="app-version">v5</span></h1>
       </div>
       <div class="top-actions">
-        <span id="syncBadge" class="sync-badge" title="Server sync status">Local</span>
-        <button id="installBtn" class="ghost" hidden>Install</button>
+        <span id="syncBadge" class="sync-badge" title="Server sync status">Progress: local</span>
+        <button id="installBtn" class="ghost" title="Install this trainer as an app on this device" hidden>Install app</button>
       </div>
     </header>
 
-    <section class="card lesson-card">
+
+    <section class="card status-card">
+      <div class="progress-row">
+        <span id="counter">—</span>
+        <span id="phaseLabel">Ready</span>
+      </div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <div id="modeName" class="mode-name">Repeat</div>
+      <p id="sentenceText" class="sentence">Loading lesson…</p>
+      <p id="translationText" class="translation"></p>
+      <div class="timer-wrap">
+        <div id="timer" class="timer">—</div>
+        <div id="timerHint" class="timer-hint"></div>
+      </div>
+    </section>
+
+    <section class="controls primary-controls" aria-label="Playback controls">
+      <button id="prevBtn" aria-label="Previous exercise">⏮</button>
+      <button id="playBtn" class="play" aria-label="Start or pause">▶</button>
+      <button id="repeatBtn" aria-label="Repeat exercise">↻</button>
+      <button id="nextBtn" aria-label="Next exercise">⏭</button>
+    </section>
+
+    <section class="card lesson-card compact-card">
       <div class="lesson-row">
         <div class="lesson-picker-wrap">
           <span class="label">Lesson</span>
@@ -38,31 +61,9 @@
       </div>
     </section>
 
-    <section class="card status-card">
-      <div class="progress-row">
-        <span id="counter">—</span>
-        <span id="phaseLabel">Ready</span>
-      </div>
-      <div class="progress"><div id="progressBar"></div></div>
-      <div id="modeName" class="mode-name">Repeat</div>
-      <p id="sentenceText" class="sentence">Loading lesson…</p>
-      <p id="translationText" class="translation"></p>
-      <div class="timer-wrap">
-        <div id="timer" class="timer">—</div>
-        <div id="timerHint" class="timer-hint">Press Start before your ride</div>
-      </div>
-    </section>
-
-    <section class="controls primary-controls" aria-label="Playback controls">
-      <button id="prevBtn" aria-label="Previous exercise">⏮</button>
-      <button id="playBtn" class="play" aria-label="Start or pause">▶</button>
-      <button id="repeatBtn" aria-label="Repeat exercise">↻</button>
-      <button id="nextBtn" aria-label="Next exercise">⏭</button>
-    </section>
-
     <section class="controls rating-controls">
-      <button id="easyBtn" class="secondary">Easy</button>
-      <button id="hardBtn" class="secondary">Hard</button>
+      <button id="easyBtn" class="secondary" title="Mark this exercise as easy">Easy</button>
+      <button id="hardBtn" class="secondary" title="Mark this exercise as difficult">Hard</button>
       <button id="rideScreenBtn" class="secondary">Ride screen</button>
     </section>
 
@@ -173,8 +174,11 @@
       <p><strong>A — Active Recall:</strong> hear a cue, answer from memory, then hear the target answer and repeat it.</p>
       <p><strong>B — Business Response:</strong> hear a business question, answer freely, then hear a model answer and repeat it.</p>
       <p><strong>Polish translations</strong> are displayed below the English text but are never spoken.</p>
-      <p><strong>Smart start:</strong> when a lesson opens, exercises with the lowest number of completed practices are placed first. Server progress is used when sync is configured.</p>
+      <p><strong>Rounds:</strong> each mode keeps its own round and exact position. Closing or refreshing the app resumes the same place. A new round prioritizes the least-practised exercises.</p>
       <p><strong>Manual navigation:</strong> Repeat, Previous and Next immediately start continuous playback. The manually selected exercise gets 2 extra seconds in each answer/repetition window.</p>
+          <p><strong>Easy / Hard:</strong> mark your subjective difficulty. They do not increase the repetition counter; the Hard-only setting uses these ratings.</p>
+      <p><strong>Progress: local:</strong> your statistics are stored only in this browser. With server sync configured, the badge changes to a server/sync status.</p>
+      <p><strong>Install app:</strong> installs the PWA on the current device. It appears only when the browser offers installation.</p>
     </section>
   </main>
 

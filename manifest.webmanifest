@@ -1,6 +1,6 @@
 {
-  "name": "CEO English Ride Trainer",
-  "short_name": "Ride Trainer",
+  "name": "CEO English Ride Trainer v5",
+  "short_name": "Ride Trainer v5",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

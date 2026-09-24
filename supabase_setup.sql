@@ -1,4 +1,4 @@
--- Ride Trainer V4 server progress storage.
+-- Ride Trainer V5 server progress storage.
 -- Run this once in Supabase: SQL Editor -> New query -> Run.
 -- Your Supabase publishable/anon key may live in server-config.json.
 -- Your private Ride Trainer sync key is entered only in the app on your devices.

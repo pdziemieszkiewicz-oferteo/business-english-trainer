@@ -19,7 +19,9 @@
     installBtn: $('installBtn'), rideOverlay: $('rideOverlay'), rideOverlayStatus: $('rideOverlayStatus')
   };
 
-  const STORE_KEY = 'ceoEnglishRideTrainerV4';
+  const STORE_KEY = 'ceoEnglishRideTrainerV5';
+  const LEGACY_STORE_KEY = 'ceoEnglishRideTrainerV4';
+  const APP_VERSION = '5.0';
   const MANUAL_REPLAY_BONUS_SECONDS = 2;
   const MODE_NAMES = { R: 'Repeat', A: 'Active Recall', B: 'Business Response' };
 
@@ -65,8 +67,10 @@
   }
 
   function loadState() {
-    try { return deepMergeState(JSON.parse(localStorage.getItem(STORE_KEY) || '{}')); }
-    catch { return defaultState(); }
+    try {
+      const raw = localStorage.getItem(STORE_KEY) || localStorage.getItem(LEGACY_STORE_KEY) || '{}';
+      return deepMergeState(JSON.parse(raw));
+    } catch { return defaultState(); }
   }
   function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 
@@ -119,6 +123,7 @@
     state.lessons[currentLesson.id] = {
       ...old, lessonId: currentLesson.id, inputFile: currentLesson.filename,
       exerciseCount: currentLesson.exercises.length, exercises: next,
+      rounds: old.rounds || {},
       updatedAt: old.updatedAt || new Date().toISOString()
     };
     state.lastLessonId = currentLesson.id;
@@ -148,14 +153,96 @@
     return a.index - b.index;
   }
 
-  function buildQueue({ resetPosition = true } = {}) {
+  function modeExercises(mode = state.settings.mode) {
+    return lesson ? lesson.exercises.filter(ex => ex.mode === mode) : [];
+  }
+
+  function deriveRoundState(mode) {
+    const list = modeExercises(mode);
+    const p = getProgress();
+    if (!list.length || !p) return { round: 1, queueIds: [], position: 0, completedIds: [], updatedAt: new Date().toISOString() };
+
+    // Migration from V4: infer the current round from the lowest repetition count.
+    const reps = list.map(ex => p.exercises?.[ex.id]?.played || 0);
+    const minReps = Math.min(...reps);
+    const completed = list.filter(ex => (p.exercises?.[ex.id]?.played || 0) > minReps);
+    const pending = list.filter(ex => (p.exercises?.[ex.id]?.played || 0) === minReps).sort(compareExercises);
+    const completedSorted = [...completed].sort((a, b) => {
+      const ta = Date.parse(p.exercises?.[a.id]?.lastPracticedAt || 0) || 0;
+      const tb = Date.parse(p.exercises?.[b.id]?.lastPracticedAt || 0) || 0;
+      return ta - tb || a.index - b.index;
+    });
+    const queueIds = [...completedSorted, ...pending].map(ex => ex.id);
+    return {
+      round: minReps + 1,
+      queueIds,
+      position: Math.min(completedSorted.length, Math.max(0, queueIds.length - 1)),
+      completedIds: completedSorted.map(ex => ex.id),
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  function roundState(mode = state.settings.mode) {
+    const p = getProgress();
+    if (!p) return null;
+    p.rounds = p.rounds || {};
+    const currentIds = modeExercises(mode).map(ex => ex.id);
+    const saved = p.rounds[mode];
+    const savedIds = saved?.queueIds || [];
+    const sameSet = savedIds.length === currentIds.length && savedIds.every(id => currentIds.includes(id));
+    if (!saved || !sameSet) {
+      p.rounds[mode] = deriveRoundState(mode);
+      touchProgress();
+      saveState();
+      scheduleServerPush();
+    }
+    return p.rounds[mode];
+  }
+
+  function createNextRound(mode = state.settings.mode) {
+    const p = getProgress();
+    if (!p) return null;
+    const old = roundState(mode) || { round: 0 };
+    const list = modeExercises(mode).sort(compareExercises);
+    p.rounds[mode] = {
+      round: (old.round || 0) + 1,
+      queueIds: list.map(ex => ex.id),
+      position: 0,
+      completedIds: [],
+      updatedAt: new Date().toISOString()
+    };
+    touchProgress();
+    saveState();
+    scheduleServerPush();
+    return p.rounds[mode];
+  }
+
+  function saveRoundPosition() {
+    if (!lesson || state.settings.hardOnly) return;
+    const rs = roundState();
+    if (!rs) return;
+    rs.position = Math.max(0, Math.min(queuePos, Math.max(0, queue.length - 1)));
+    rs.updatedAt = new Date().toISOString();
+    touchProgress();
+    saveState();
+    scheduleServerPush();
+  }
+
+  function buildQueue({ resetPosition = false } = {}) {
     if (!lesson) { queue = []; queuePos = 0; updateUI(); return; }
-    queue = lesson.exercises
-      .filter(ex => ex.mode === state.settings.mode)
-      .filter(ex => !state.settings.hardOnly || isHard(ex))
-      .sort(compareExercises);
-    if (resetPosition) queuePos = 0;
-    else queuePos = Math.min(queuePos, Math.max(0, queue.length - 1));
+
+    if (state.settings.hardOnly) {
+      queue = modeExercises().filter(isHard).sort(compareExercises);
+      queuePos = resetPosition ? 0 : Math.min(queuePos, Math.max(0, queue.length - 1));
+      updateUI();
+      return;
+    }
+
+    const rs = roundState();
+    const byId = new Map(modeExercises().map(ex => [ex.id, ex]));
+    queue = (rs?.queueIds || []).map(id => byId.get(id)).filter(Boolean);
+    queuePos = resetPosition ? 0 : Math.max(0, Math.min(Number(rs?.position || 0), Math.max(0, queue.length - 1)));
+    if (resetPosition && rs) { rs.position = 0; rs.updatedAt = new Date().toISOString(); touchProgress(); saveState(); scheduleServerPush(); }
     updateUI();
   }
 
@@ -181,8 +268,9 @@
     els.lessonMeta.textContent = `${allForMode.length} exercises in ${MODE_NAMES[state.settings.mode]}`;
     const ex = currentExercise();
     if (ex) {
-      const p = progressFor(ex);
-      els.counter.textContent = `${queuePos + 1} / ${queue.length} · reps ${p?.played || 0}`;
+      const rs = roundState();
+      const roundNo = rs?.round || 1;
+      els.counter.textContent = `${queuePos + 1} / ${queue.length} · Round ${roundNo}`;
       els.progressBar.style.width = `${((queuePos + 1) / Math.max(1, queue.length)) * 100}%`;
       displayExercisePart(ex, 'prompt');
     } else {
@@ -209,7 +297,10 @@
       <div class="stat"><strong>${hard}</strong><span>currently difficult</span></div>`;
   }
 
-  function setPhase(label, hint = '') { els.phaseLabel.textContent = label; els.timerHint.textContent = hint; }
+  function setPhase(label, hint = '') {
+    els.phaseLabel.textContent = label;
+    els.timerHint.textContent = hint;
+  }
   function setPlayIcon() { els.playBtn.textContent = running && !paused ? '⏸' : '▶'; }
 
   function loadVoices() {
@@ -256,7 +347,7 @@
     return new Promise(resolve => {
       let remaining = ms;
       let lastTick = Date.now();
-      if (hint) els.timerHint.textContent = hint;
+      els.timerHint.textContent = hint || '';
       function tick() {
         if (token !== currentAbort || !running) return resolve('aborted');
         const now = Date.now();
@@ -288,6 +379,13 @@
     ep.lastPracticedAt = new Date().toISOString();
     p.totalPlays = (p.totalPlays || 0) + 1;
     p.lastPracticedAt = new Date().toISOString();
+
+    if (!state.settings.hardOnly) {
+      const rs = roundState(ex.mode);
+      if (rs && !rs.completedIds.includes(ex.id)) rs.completedIds.push(ex.id);
+      if (rs) rs.updatedAt = new Date().toISOString();
+    }
+
     touchProgress(); saveState(); updateStats(); scheduleServerPush();
   }
 
@@ -360,15 +458,33 @@
 
   function advanceAfterCompletion() {
     if (!queue.length) return;
-    if (queuePos < queue.length - 1) {
-      queuePos += 1;
+
+    if (state.settings.hardOnly) {
+      queuePos = queuePos < queue.length - 1 ? queuePos + 1 : 0;
       updateUI();
       setTimeout(() => { if (running && !paused) runCurrentExercise(); }, 280);
-    } else {
-      // Re-sort after completing a full pass so the least-practised exercise becomes first again.
-      buildQueue({ resetPosition: true });
-      setTimeout(() => { if (running && !paused) runCurrentExercise(); }, 280);
+      return;
     }
+
+    const rs = roundState();
+    if (!rs) return;
+    const completed = new Set(rs.completedIds || []);
+
+    if (completed.size >= queue.length) {
+      createNextRound();
+      buildQueue({ resetPosition: false });
+    } else {
+      let next = queuePos;
+      for (let step = 1; step <= queue.length; step++) {
+        const candidate = (queuePos + step) % queue.length;
+        if (!completed.has(queue[candidate].id)) { next = candidate; break; }
+      }
+      queuePos = next;
+      saveRoundPosition();
+      updateUI();
+    }
+
+    setTimeout(() => { if (running && !paused) runCurrentExercise(); }, 280);
   }
 
   async function startTraining() {
@@ -387,7 +503,7 @@
 
   function stopTraining(hint = '') {
     running = false; paused = false; ++currentAbort; clearTimeout(countdownTimer); window.speechSynthesis?.cancel(); releaseWakeLock(); setPlayIcon();
-    if (hint) els.timerHint.textContent = hint;
+    els.timerHint.textContent = hint || '';
   }
 
   async function startManualPlaybackAtCurrent() {
@@ -397,11 +513,19 @@
   }
   async function repeatCurrent() { if (lesson && queue.length) await startManualPlaybackAtCurrent(); }
   async function nextExercise() {
-    if (!queue.length) return; stopTraining(); queuePos = Math.min(queue.length - 1, queuePos + 1); updateUI();
+    if (!queue.length) return;
+    stopTraining();
+    queuePos = Math.min(queue.length - 1, queuePos + 1);
+    saveRoundPosition();
+    updateUI();
     running = true; paused = false; if (state.settings.wakeLock) await requestWakeLock(); setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
   async function prevExercise() {
-    if (!queue.length) return; stopTraining(); queuePos = Math.max(0, queuePos - 1); updateUI();
+    if (!queue.length) return;
+    stopTraining();
+    queuePos = Math.max(0, queuePos - 1);
+    saveRoundPosition();
+    updateUI();
     running = true; paused = false; if (state.settings.wakeLock) await requestWakeLock(); setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
 
@@ -492,7 +616,7 @@
     reconcileProgress(lesson);
     state.lastLessonId = lesson.id; saveState();
     await syncCurrentLessonOnOpen();
-    buildQueue({ resetPosition: true });
+    buildQueue({ resetPosition: false });
     els.lessonSelect.value = lesson.id;
   }
 
@@ -531,7 +655,7 @@
   function updateSyncStatus(message = '') {
     els.syncKeyInput.value = state.syncKey || '';
     if (!serverConfigured()) {
-      setSyncBadge('Local');
+      setSyncBadge('Progress: local');
       els.syncInfo.textContent = message || 'Server progress sync is not configured. Lessons can still load from GitHub Pages.';
     } else if (!state.syncKey) {
       setSyncBadge('Key needed', 'error');
@@ -563,7 +687,8 @@
       const data = state.lessons[lessonId];
       const r = await fetch(url, {
         method: 'POST', headers: baseApiHeaders(),
-        body: JSON.stringify({ p_sync_key: state.syncKey, p_lesson_id: lessonId, p_data: data })
+        body: JSON.stringify({ p_sync_key: state.syncKey, p_lesson_id: lessonId, p_data: data }),
+        keepalive: true
       });
       if (!r.ok) throw new Error(`Sync write failed: ${r.status}`);
       setSyncBadge('Synced', 'ok'); els.syncInfo.textContent = `Progress synced at ${new Date().toLocaleTimeString()}.`;
@@ -605,7 +730,7 @@
         await pushRemoteProgress(lesson.id);
       }
       setSyncBadge('Synced', 'ok');
-      els.syncInfo.textContent = 'Server progress loaded. The least-practised exercises will start first.';
+      els.syncInfo.textContent = 'Server progress loaded. Your saved round and position will resume.';
     } catch (e) {
       setSyncBadge('Sync error', 'error');
       els.syncInfo.textContent = `${e.message}. Using local progress.`;
@@ -621,7 +746,7 @@
   function exportProgress() {
     if (!lesson) return;
     const p = getProgress();
-    const payload = { schemaVersion: 4, lessonId: lesson.id, exportedAt: new Date().toISOString(), progress: p };
+    const payload = { schemaVersion: 5, lessonId: lesson.id, exportedAt: new Date().toISOString(), progress: p };
     downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }), `${lesson.id}.progress.json`);
   }
   function downloadBlob(blob, filename) {
@@ -634,12 +759,12 @@
     const progress = data.progress || data;
     if (!lessonId) throw new Error('Missing lessonId.');
     state.lessons[lessonId] = progress; saveState();
-    if (lesson?.id === lessonId) { reconcileProgress(lesson); buildQueue({ resetPosition: true }); scheduleServerPush(); }
+    if (lesson?.id === lessonId) { reconcileProgress(lesson); buildQueue({ resetPosition: false }); scheduleServerPush(); }
   }
   function resetProgress() {
     if (!lesson || !confirm(`Reset all progress for ${lesson.id}?`)) return;
-    state.lessons[lesson.id] = { lessonId: lesson.id, sessions: 0, totalPlays: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), exercises: {} };
-    reconcileProgress(lesson); buildQueue({ resetPosition: true }); scheduleServerPush();
+    state.lessons[lesson.id] = { lessonId: lesson.id, sessions: 0, totalPlays: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), exercises: {}, rounds: {} };
+    reconcileProgress(lesson); buildQueue({ resetPosition: false }); scheduleServerPush();
   }
 
   // ---------- Settings / events ----------
@@ -661,13 +786,13 @@
   function bindSetting(el, key, transform = x => x) {
     el.addEventListener('change', () => {
       state.settings[key] = transform(el.type === 'checkbox' ? el.checked : el.value); saveState();
-      if (['shuffle', 'hardOnly'].includes(key)) buildQueue({ resetPosition: true });
+      if (key === 'hardOnly') buildQueue({ resetPosition: state.settings.hardOnly });
     });
   }
 
   els.modeButtons.forEach(btn => btn.addEventListener('click', () => {
     if (state.settings.mode === btn.dataset.mode) return;
-    stopTraining(); state.settings.mode = btn.dataset.mode; saveState(); buildQueue({ resetPosition: true });
+    stopTraining(); state.settings.mode = btn.dataset.mode; saveState(); buildQueue({ resetPosition: false });
   }));
   els.lessonSelect.addEventListener('change', () => loadLessonById(els.lessonSelect.value).catch(e => alert(e.message)));
   els.refreshLessonsBtn.addEventListener('click', async () => {
@@ -703,7 +828,7 @@
   els.copySyncKeyBtn.addEventListener('click', async () => { const value = els.syncKeyInput.value.trim() || state.syncKey; if (value) await navigator.clipboard?.writeText(value); });
   els.saveSyncKeyBtn.addEventListener('click', async () => {
     state.syncKey = els.syncKeyInput.value.trim(); saveState(); els.syncKeyInput.type = 'password'; updateSyncStatus();
-    if (lesson) { await syncCurrentLessonOnOpen(); buildQueue({ resetPosition: true }); }
+    if (lesson) { await syncCurrentLessonOnOpen(); buildQueue({ resetPosition: false }); }
   });
 
   if ('speechSynthesis' in window) { window.speechSynthesis.onvoiceschanged = loadVoices; setTimeout(loadVoices, 250); setTimeout(loadVoices, 1200); }
@@ -719,6 +844,7 @@
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; els.installBtn.hidden = false; });
   els.installBtn.addEventListener('click', async () => { if (!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); await deferredInstallPrompt.userChoice; deferredInstallPrompt = null; els.installBtn.hidden = true; });
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  window.addEventListener('pagehide', () => { if (lesson && syncConfigured()) pushRemoteProgress(lesson.id); });
 
   async function init() {
     applySettingsToUI();
