@@ -1,0 +1,306 @@
+# Business English Core — 100 phrases × 3 modes
+# Format:
+# R | English | Polish
+# A | English cue | Polish cue | English answer | Polish answer
+# B | English question | Polish question | English model answer | Polish model answer
+
+R | The trade-off is clear. | Kompromis jest wyraźny.
+A | Say that the compromise between two objectives is obvious. | Powiedz, że kompromis między dwoma celami jest oczywisty. | The trade-off is clear. | Kompromis jest wyraźny.
+B | How do you see the balance between growth and profitability? | Jak oceniasz równowagę między wzrostem a rentownością? | The trade-off is clear. | Kompromis jest wyraźny.
+R | How does this look from the customer's perspective? | Jak to wygląda z perspektywy klienta?
+A | Ask how the situation appears to the customer. | Zapytaj, jak ta sytuacja wygląda z perspektywy klienta. | How does this look from the customer's perspective? | Jak to wygląda z perspektywy klienta?
+B | How does this look from the customer's perspective? | Jak to wygląda z perspektywy klienta? | From the customer's perspective, the process is still too complicated. | Z perspektywy klienta ten proces jest nadal zbyt skomplikowany.
+R | Which option are you leaning toward? | Ku której opcji się skłaniasz?
+A | Ask which option someone currently prefers. | Zapytaj, ku której opcji ktoś obecnie się skłania. | Which option are you leaning toward? | Ku której opcji się skłaniasz?
+B | Which option are you leaning toward? | Ku której opcji się skłaniasz? | I'm leaning toward option two. | Skłaniam się ku opcji drugiej.
+R | How would you pressure-test it? | Jak poddałbyś to założenie wymagającemu testowi?
+A | Ask how someone would challenge an idea before accepting it. | Zapytaj, jak ktoś sprawdziłby pomysł, zanim go zaakceptuje. | How would you pressure-test it? | Jak poddałbyś to założenie wymagającemu testowi?
+B | How would you pressure-test it? | Jak poddałbyś to założenie wymagającemu testowi? | I'd test the weakest assumptions first. | Najpierw przetestowałbym najsłabsze założenia.
+R | Which metric predicts retention best? | Która metryka najlepiej przewiduje retencję?
+A | Ask which metric is the strongest predictor of retention. | Zapytaj, która metryka najlepiej przewiduje retencję. | Which metric predicts retention best? | Która metryka najlepiej przewiduje retencję?
+B | Which metric predicts retention best? | Która metryka najlepiej przewiduje retencję? | Early product usage seems to predict retention best. | Wczesne korzystanie z produktu wydaje się najlepiej przewidywać retencję.
+R | I wouldn't rule it out. | Nie wykluczałbym tego.
+A | Say that you want to keep an option open. | Powiedz, że chcesz pozostawić tę opcję otwartą. | I wouldn't rule it out. | Nie wykluczałbym tego.
+B | Would you consider entering another market? | Czy rozważyłbyś wejście na kolejny rynek? | I wouldn't rule it out. | Nie wykluczałbym tego.
+R | What is the main issue here? | Jaki jest tutaj główny problem?
+A | Ask someone to identify the core problem. | Poproś kogoś o wskazanie głównego problemu. | What is the main issue here? | Jaki jest tutaj główny problem?
+B | What is the main issue here? | Jaki jest tutaj główny problem? | The main issue is low retention. | Głównym problemem jest niska retencja.
+R | We should phase it out. | Powinniśmy stopniowo to wycofać.
+A | Say that something should be removed gradually. | Powiedz, że coś powinno być stopniowo wycofywane. | We should phase it out. | Powinniśmy stopniowo to wycofać.
+B | What should we do with the old process? | Co powinniśmy zrobić ze starym procesem? | We should phase it out. | Powinniśmy stopniowo to wycofać.
+R | What is driving retention? | Co wpływa na retencję?
+A | Ask what is causing customers to stay. | Zapytaj, co sprawia, że klienci zostają. | What is driving retention? | Co wpływa na retencję?
+B | What is driving retention? | Co wpływa na retencję? | The strongest driver seems to be early product value. | Najsilniejszym czynnikiem wydaje się szybkie odczucie wartości produktu.
+R | This removes unnecessary friction. | To usuwa niepotrzebne utrudnienia.
+A | Say that a change makes the process easier for users. | Powiedz, że zmiana upraszcza proces dla użytkowników. | This removes unnecessary friction. | To usuwa niepotrzebne utrudnienia.
+B | Why should we simplify this step? | Dlaczego powinniśmy uprościć ten krok? | This removes unnecessary friction. | To usuwa niepotrzebne utrudnienia.
+R | What should we fine-tune first? | Co powinniśmy dopracować najpierw?
+A | Ask what should be adjusted first. | Zapytaj, co powinno zostać dopracowane w pierwszej kolejności. | What should we fine-tune first? | Co powinniśmy dopracować najpierw?
+B | What should we fine-tune first? | Co powinniśmy dopracować najpierw? | I'd start with the ranking weights. | Zacząłbym od wag w rankingu.
+R | It's too early to tell. | Jest za wcześnie, żeby to ocenić.
+A | Say that you do not have enough time or data to judge yet. | Powiedz, że jest jeszcze za mało czasu lub danych, aby to ocenić. | It's too early to tell. | Jest za wcześnie, żeby to ocenić.
+B | Do we already know whether the pilot works? | Czy już wiemy, czy pilotaż działa? | It's too early to tell. | Jest za wcześnie, żeby to ocenić.
+R | What threshold would be reasonable? | Jaki próg byłby rozsądny?
+A | Ask what limit would make sense. | Zapytaj, jaki próg lub limit byłby rozsądny. | What threshold would be reasonable? | Jaki próg byłby rozsądny?
+B | What threshold would be reasonable? | Jaki próg byłby rozsądny? | I'd start with a five-percent decline as the maximum acceptable level. | Zacząłbym od maksymalnie pięcioprocentowego spadku.
+R | There is too much noise. | W danych jest zbyt dużo szumu.
+A | Say that random variation makes the data hard to interpret. | Powiedz, że losowa zmienność utrudnia interpretację danych. | There is too much noise. | W danych jest zbyt dużo szumu.
+B | Why can't we trust this result yet? | Dlaczego nie możemy jeszcze ufać temu wynikowi? | There is too much noise. | W danych jest zbyt dużo szumu.
+R | We need to fine-tune the model. | Musimy dopracować model.
+A | Say that the model needs small adjustments. | Powiedz, że model wymaga drobnych korekt. | We need to fine-tune the model. | Musimy dopracować model.
+B | Is the model ready for full rollout? | Czy model jest gotowy do pełnego wdrożenia? | We need to fine-tune the model. | Musimy dopracować model.
+R | What is the biggest downside? | Jaka jest największa wada lub ryzyko?
+A | Ask about the most important negative consequence. | Zapytaj o najważniejszy negatywny skutek. | What is the biggest downside? | Jaka jest największa wada lub ryzyko?
+B | What is the biggest downside? | Jaka jest największa wada lub ryzyko? | The biggest downside is a possible drop in monetization. | Największym ryzykiem jest możliwy spadek monetyzacji.
+R | The risk is manageable. | Ryzyko jest do opanowania.
+A | Say that the risk can be controlled. | Powiedz, że ryzyko można kontrolować. | The risk is manageable. | Ryzyko jest do opanowania.
+B | Are you comfortable running this experiment? | Czy czujesz się komfortowo, uruchamiając ten eksperyment? | The risk is manageable. | Ryzyko jest do opanowania.
+R | My preference is to start small. | Wolę zacząć od małej skali.
+A | Say that you prefer a limited first step. | Powiedz, że wolisz zacząć od ograniczonego zakresu. | My preference is to start small. | Wolę zacząć od małej skali.
+B | How would you launch this experiment? | Jak uruchomiłbyś ten eksperyment? | My preference is to start small. | Wolę zacząć od małej skali.
+R | The bottleneck is onboarding. | Wąskim gardłem jest onboarding.
+A | Say that onboarding is the main constraint. | Powiedz, że onboarding jest głównym ograniczeniem. | The bottleneck is onboarding. | Wąskim gardłem jest onboarding.
+B | Where is the process slowing down? | W którym miejscu proces zwalnia? | The bottleneck is onboarding. | Wąskim gardłem jest onboarding.
+R | How can we avoid this mistake? | Jak możemy uniknąć tego błędu?
+A | Ask how to prevent the same error from happening again. | Zapytaj, jak zapobiec ponownemu wystąpieniu tego samego błędu. | How can we avoid this mistake? | Jak możemy uniknąć tego błędu?
+B | How can we avoid this mistake? | Jak możemy uniknąć tego błędu? | We should add a clear validation step before launch. | Powinniśmy dodać jasny etap weryfikacji przed uruchomieniem.
+R | We've chosen five categories. | Wybraliśmy pięć kategorii.
+A | Say that the team has selected five categories. | Powiedz, że zespół wybrał pięć kategorii. | We've chosen five categories. | Wybraliśmy pięć kategorii.
+B | How many categories are in the pilot? | Ile kategorii obejmuje pilotaż? | We've chosen five categories. | Wybraliśmy pięć kategorii.
+R | Does the data support this conclusion? | Czy dane potwierdzają ten wniosek?
+A | Ask whether the evidence justifies the conclusion. | Zapytaj, czy dane uzasadniają ten wniosek. | Does the data support this conclusion? | Czy dane potwierdzają ten wniosek?
+B | Does the data support this conclusion? | Czy dane potwierdzają ten wniosek? | Not yet. We need a larger sample. | Jeszcze nie. Potrzebujemy większej próby.
+R | We haven't decided yet. | Jeszcze nie podjęliśmy decyzji.
+A | Say that the decision is still open. | Powiedz, że decyzja nie została jeszcze podjęta. | We haven't decided yet. | Jeszcze nie podjęliśmy decyzji.
+B | Have you made the final decision? | Czy podjęliście już ostateczną decyzję? | We haven't decided yet. | Jeszcze nie podjęliśmy decyzji.
+R | Before we commit, let's verify it. | Zanim się zobowiążemy, zweryfikujmy to.
+A | Say that you want to check something before making a commitment. | Powiedz, że chcesz coś sprawdzić przed podjęciem zobowiązania. | Before we commit, let's verify it. | Zanim się zobowiążemy, zweryfikujmy to.
+B | Are you ready to commit to this plan? | Czy jesteś gotowy zobowiązać się do tego planu? | Before we commit, let's verify it. | Zanim się zobowiążemy, zweryfikujmy to.
+R | The pilot is gaining traction. | Pilotaż nabiera rozpędu.
+A | Say that the pilot is starting to show momentum. | Powiedz, że pilotaż zaczyna nabierać rozpędu. | The pilot is gaining traction. | Pilotaż nabiera rozpędu.
+B | How is the pilot performing so far? | Jak dotąd radzi sobie pilotaż? | The pilot is gaining traction. | Pilotaż nabiera rozpędu.
+R | How much risk are we willing to accept? | Jak duże ryzyko jesteśmy gotowi zaakceptować?
+A | Ask what level of risk is acceptable. | Zapytaj, jaki poziom ryzyka jest akceptowalny. | How much risk are we willing to accept? | Jak duże ryzyko jesteśmy gotowi zaakceptować?
+B | How much risk are we willing to accept? | Jak duże ryzyko jesteśmy gotowi zaakceptować? | A small short-term decline is acceptable if the long-term upside is strong. | Niewielki krótkoterminowy spadek jest akceptowalny, jeśli długoterminowy potencjał jest duży.
+R | What could make us lose momentum? | Co mogłoby sprawić, że stracimy tempo?
+A | Ask what could slow down current progress. | Zapytaj, co mogłoby spowolnić obecne postępy. | What could make us lose momentum? | Co mogłoby sprawić, że stracimy tempo?
+B | What could make us lose momentum? | Co mogłoby sprawić, że stracimy tempo? | A slow rollout and unclear ownership could make us lose momentum. | Powolne wdrożenie i niejasna odpowiedzialność mogłyby sprawić, że stracimy tempo.
+R | If it fails, we'll stop. | Jeśli to się nie uda, zatrzymamy projekt.
+A | Say what you will do if the experiment fails. | Powiedz, co zrobicie, jeśli eksperyment się nie powiedzie. | If it fails, we'll stop. | Jeśli to się nie uda, zatrzymamy projekt.
+B | What will you do if the experiment fails? | Co zrobicie, jeśli eksperyment się nie powiedzie? | If it fails, we'll stop. | Jeśli to się nie uda, zatrzymamy projekt.
+R | Why did we fall short? | Dlaczego nie osiągnęliśmy celu?
+A | Ask why the result was below target. | Zapytaj, dlaczego wynik był poniżej celu. | Why did we fall short? | Dlaczego nie osiągnęliśmy celu?
+B | Why did we fall short? | Dlaczego nie osiągnęliśmy celu? | We underestimated how long onboarding would take. | Nie doszacowaliśmy czasu potrzebnego na onboarding.
+R | What is blocking the decision? | Co blokuje podjęcie decyzji?
+A | Ask what is preventing a decision from being made. | Zapytaj, co uniemożliwia podjęcie decyzji. | What is blocking the decision? | Co blokuje podjęcie decyzji?
+B | What is blocking the decision? | Co blokuje podjęcie decyzji? | We still don't have reliable retention data. | Nadal nie mamy wiarygodnych danych o retencji.
+R | Let's pressure-test this assumption. | Sprawdźmy to założenie w wymagający sposób.
+A | Suggest challenging an assumption before relying on it. | Zaproponuj dokładne sprawdzenie założenia, zanim na nim polegniemy. | Let's pressure-test this assumption. | Sprawdźmy to założenie w wymagający sposób.
+B | What should we do before accepting this assumption? | Co powinniśmy zrobić, zanim zaakceptujemy to założenie? | Let's pressure-test this assumption. | Sprawdźmy to założenie w wymagający sposób.
+R | What is the potential upside? | Jaki jest potencjalny pozytywny efekt?
+A | Ask about the possible benefit of a decision. | Zapytaj o możliwą korzyść z decyzji. | What is the potential upside? | Jaki jest potencjalny pozytywny efekt?
+B | What is the potential upside? | Jaki jest potencjalny pozytywny efekt? | The upside is higher retention and more predictable revenue. | Korzyścią jest wyższa retencja i bardziej przewidywalne przychody.
+R | What could skew the results? | Co mogłoby zniekształcić wyniki?
+A | Ask what could distort the experiment results. | Zapytaj, co mogłoby zniekształcić wyniki eksperymentu. | What could skew the results? | Co mogłoby zniekształcić wyniki?
+B | What could skew the results? | Co mogłoby zniekształcić wyniki? | Seasonality and a small sample could skew the results. | Sezonowość i mała próba mogłyby zniekształcić wyniki.
+R | How long should we track it? | Jak długo powinniśmy to monitorować?
+A | Ask how long a metric should be monitored. | Zapytaj, jak długo należy monitorować daną metrykę. | How long should we track it? | Jak długo powinniśmy to monitorować?
+B | How long should we track it? | Jak długo powinniśmy to monitorować? | I'd track it for at least four weeks. | Monitorowałbym to przez co najmniej cztery tygodnie.
+R | We should address the root cause. | Powinniśmy zająć się przyczyną źródłową.
+A | Say that you want to solve the underlying problem. | Powiedz, że chcesz rozwiązać problem u źródła. | We should address the root cause. | Powinniśmy zająć się przyczyną źródłową.
+B | Should we fix the symptom or the underlying problem? | Czy powinniśmy naprawić objaw czy problem źródłowy? | We should address the root cause. | Powinniśmy zająć się przyczyną źródłową.
+R | The downside is limited. | Negatywny skutek jest ograniczony.
+A | Say that the potential negative impact is small. | Powiedz, że potencjalny negatywny wpływ jest niewielki. | The downside is limited. | Negatywny skutek jest ograniczony.
+B | How serious is the downside? | Jak poważne jest ryzyko negatywnego skutku? | The downside is limited. | Negatywny skutek jest ograniczony.
+R | Let's solve the right problem. | Rozwiążmy właściwy problem.
+A | Suggest making sure the team focuses on the correct problem. | Zaproponuj upewnienie się, że zespół skupia się na właściwym problemie. | Let's solve the right problem. | Rozwiążmy właściwy problem.
+B | What should we confirm before building a solution? | Co powinniśmy potwierdzić przed budowaniem rozwiązania? | Let's solve the right problem. | Rozwiążmy właściwy problem.
+R | We need a clear guardrail. | Potrzebujemy jasnej granicy bezpieczeństwa.
+A | Say that the experiment needs a clear safety limit. | Powiedz, że eksperyment potrzebuje jasnego limitu bezpieczeństwa. | We need a clear guardrail. | Potrzebujemy jasnej granicy bezpieczeństwa.
+B | How can we protect monetization during the test? | Jak możemy chronić monetyzację podczas testu? | We need a clear guardrail. | Potrzebujemy jasnej granicy bezpieczeństwa.
+R | What would really move the needle? | Co naprawdę przyniosłoby istotną zmianę?
+A | Ask what action would have a meaningful impact. | Zapytaj, jakie działanie przyniosłoby istotny efekt. | What would really move the needle? | Co naprawdę przyniosłoby istotną zmianę?
+B | What would really move the needle? | Co naprawdę przyniosłoby istotną zmianę? | Improving activation could really move the needle. | Poprawa aktywacji mogłaby naprawdę przynieść istotną zmianę.
+R | We need stronger evidence. | Potrzebujemy mocniejszych dowodów.
+A | Say that the current evidence is not sufficient. | Powiedz, że obecne dowody są niewystarczające. | We need stronger evidence. | Potrzebujemy mocniejszych dowodów.
+B | Are you ready to make the decision now? | Czy jesteś gotowy podjąć decyzję już teraz? | We need stronger evidence. | Potrzebujemy mocniejszych dowodów.
+R | We should avoid this mistake. | Powinniśmy uniknąć tego błędu.
+A | Say that the team should prevent the same error. | Powiedz, że zespół powinien uniknąć tego samego błędu. | We should avoid this mistake. | Powinniśmy uniknąć tego błędu.
+B | What did we learn from the previous test? | Czego nauczyliśmy się z poprzedniego testu? | We should avoid this mistake. | Powinniśmy uniknąć tego błędu.
+R | What conclusion can we draw now? | Jaki wniosek możemy teraz wyciągnąć?
+A | Ask what can reasonably be concluded from the current evidence. | Zapytaj, jaki wniosek można rozsądnie wyciągnąć z obecnych danych. | What conclusion can we draw now? | Jaki wniosek możemy teraz wyciągnąć?
+B | What conclusion can we draw now? | Jaki wniosek możemy teraz wyciągnąć? | We can say the direction is positive, but not yet conclusive. | Możemy powiedzieć, że kierunek jest pozytywny, ale wynik nie jest jeszcze rozstrzygający.
+R | What do we still need to think through? | Co jeszcze musimy dokładnie przemyśleć?
+A | Ask which issues still require deeper thinking. | Zapytaj, które kwestie nadal wymagają głębszego przemyślenia. | What do we still need to think through? | Co jeszcze musimy dokładnie przemyśleć?
+B | What do we still need to think through? | Co jeszcze musimy dokładnie przemyśleć? | We still need to think through pricing and rollout risk. | Nadal musimy dokładnie przemyśleć ceny i ryzyko wdrożenia.
+R | From the customer's perspective, it works. | Z perspektywy klienta to działa.
+A | Say that the solution works when viewed from the customer's side. | Powiedz, że rozwiązanie działa z perspektywy klienta. | From the customer's perspective, it works. | Z perspektywy klienta to działa.
+B | Does the new process make sense for customers? | Czy nowy proces ma sens dla klientów? | From the customer's perspective, it works. | Z perspektywy klienta to działa.
+R | My assumption may be wrong. | Moje założenie może być błędne.
+A | Acknowledge that your assumption could be incorrect. | Przyznaj, że twoje założenie może być błędne. | My assumption may be wrong. | Moje założenie może być błędne.
+B | How confident are you in this assumption? | Jak bardzo jesteś pewny tego założenia? | My assumption may be wrong. | Moje założenie może być błędne.
+R | Let's roll it out gradually. | Wdrażajmy to stopniowo.
+A | Suggest introducing the change step by step. | Zaproponuj stopniowe wdrażanie zmiany. | Let's roll it out gradually. | Wdrażajmy to stopniowo.
+B | How should we launch this across the market? | Jak powinniśmy wdrożyć to na całym rynku? | Let's roll it out gradually. | Wdrażajmy to stopniowo.
+R | How can we isolate the effect? | Jak możemy wyizolować ten efekt?
+A | Ask how to separate one factor from other influences. | Zapytaj, jak oddzielić wpływ jednego czynnika od pozostałych. | How can we isolate the effect? | Jak możemy wyizolować ten efekt?
+B | How can we isolate the effect? | Jak możemy wyizolować ten efekt? | We can use a clean control group and change only one variable. | Możemy użyć czystej grupy kontrolnej i zmienić tylko jedną zmienną.
+R | We need to isolate the effect. | Musimy wyizolować ten efekt.
+A | Say that you need to separate the impact of one change. | Powiedz, że trzeba oddzielić wpływ jednej konkretnej zmiany. | We need to isolate the effect. | Musimy wyizolować ten efekt.
+B | Why do we need a control group? | Dlaczego potrzebujemy grupy kontrolnej? | We need to isolate the effect. | Musimy wyizolować ten efekt.
+R | What should we use as a baseline? | Czego powinniśmy użyć jako punktu odniesienia?
+A | Ask what reference point should be used for comparison. | Zapytaj, jaki punkt odniesienia powinniśmy wykorzystać do porównania. | What should we use as a baseline? | Czego powinniśmy użyć jako punktu odniesienia?
+B | What should we use as a baseline? | Czego powinniśmy użyć jako punktu odniesienia? | I'd use the last eight weeks of request-level data. | Użyłbym danych na poziomie zapytań z ostatnich ośmiu tygodni.
+R | I haven't seen enough evidence. | Nie widziałem jeszcze wystarczających dowodów.
+A | Say that the available evidence is not sufficient for you. | Powiedz, że dostępne dowody nie są dla ciebie wystarczające. | I haven't seen enough evidence. | Nie widziałem jeszcze wystarczających dowodów.
+B | Why aren't you ready to approve it? | Dlaczego nie jesteś gotowy tego zatwierdzić? | I haven't seen enough evidence. | Nie widziałem jeszcze wystarczających dowodów.
+R | Are we solving the right problem? | Czy rozwiązujemy właściwy problem?
+A | Ask whether the team is focused on the correct problem. | Zapytaj, czy zespół skupia się na właściwym problemie. | Are we solving the right problem? | Czy rozwiązujemy właściwy problem?
+B | Are we solving the right problem? | Czy rozwiązujemy właściwy problem? | I think so, but we should validate the customer need first. | Myślę, że tak, ale najpierw powinniśmy zweryfikować potrzebę klienta.
+R | The upside is significant. | Potencjalna korzyść jest znacząca.
+A | Say that the possible benefit is large. | Powiedz, że potencjalna korzyść jest duża. | The upside is significant. | Potencjalna korzyść jest znacząca.
+B | Why is this opportunity worth considering? | Dlaczego warto rozważyć tę możliwość? | The upside is significant. | Potencjalna korzyść jest znacząca.
+R | I'm afraid we need more data. | Obawiam się, że potrzebujemy więcej danych.
+A | Politely say that more data is needed. | Powiedz uprzejmie, że potrzebujemy więcej danych. | I'm afraid we need more data. | Obawiam się, że potrzebujemy więcej danych.
+B | Can we make the decision today? | Czy możemy podjąć decyzję dzisiaj? | I'm afraid we need more data. | Obawiam się, że potrzebujemy więcej danych.
+R | Would you rule this option out? | Czy wykluczyłbyś tę opcję?
+A | Ask whether someone would completely reject an option. | Zapytaj, czy ktoś całkowicie wykluczyłby tę opcję. | Would you rule this option out? | Czy wykluczyłbyś tę opcję?
+B | Would you rule this option out? | Czy wykluczyłbyś tę opcję? | No, I'd keep it as a backup option. | Nie, zostawiłbym ją jako opcję zapasową.
+R | It comes down to execution. | Ostatecznie wszystko zależy od wykonania.
+A | Say that success mainly depends on execution. | Powiedz, że sukces zależy głównie od jakości wykonania. | It comes down to execution. | Ostatecznie wszystko zależy od wykonania.
+B | What will determine whether this strategy succeeds? | Co zdecyduje o sukcesie tej strategii? | It comes down to execution. | Ostatecznie wszystko zależy od wykonania.
+R | I need to think this through. | Muszę to dokładnie przemyśleć.
+A | Say that you need more time to consider the issue carefully. | Powiedz, że potrzebujesz więcej czasu, aby dokładnie przemyśleć tę kwestię. | I need to think this through. | Muszę to dokładnie przemyśleć.
+B | Can you give me your final answer now? | Czy możesz teraz podać ostateczną odpowiedź? | I need to think this through. | Muszę to dokładnie przemyśleć.
+R | This could skew the results. | To mogłoby zniekształcić wyniki.
+A | Say that something could distort the experiment results. | Powiedz, że coś mogłoby zniekształcić wyniki eksperymentu. | This could skew the results. | To mogłoby zniekształcić wyniki.
+B | Why should we exclude this unusual week? | Dlaczego powinniśmy wykluczyć ten nietypowy tydzień? | This could skew the results. | To mogłoby zniekształcić wyniki.
+R | We should phase it in. | Powinniśmy wprowadzać to stopniowo.
+A | Say that the new solution should be introduced gradually. | Powiedz, że nowe rozwiązanie powinno być wprowadzane stopniowo. | We should phase it in. | Powinniśmy wprowadzać to stopniowo.
+B | How should we introduce the new process? | Jak powinniśmy wprowadzić nowy proces? | We should phase it in. | Powinniśmy wprowadzać to stopniowo.
+R | We shouldn't jump to conclusions. | Nie powinniśmy wyciągać pochopnych wniosków.
+A | Warn against making a conclusion too quickly. | Ostrzeż przed zbyt szybkim wyciąganiem wniosków. | We shouldn't jump to conclusions. | Nie powinniśmy wyciągać pochopnych wniosków.
+B | The first week looks good. Is that enough? | Pierwszy tydzień wygląda dobrze. Czy to wystarczy? | We shouldn't jump to conclusions. | Nie powinniśmy wyciągać pochopnych wniosków.
+R | Let's track it over time. | Monitorujmy to w czasie.
+A | Suggest monitoring a metric for a longer period. | Zaproponuj monitorowanie metryki przez dłuższy okres. | Let's track it over time. | Monitorujmy to w czasie.
+B | How should we evaluate this trend? | Jak powinniśmy ocenić ten trend? | Let's track it over time. | Monitorujmy to w czasie.
+R | If it works, we'll scale it. | Jeśli to zadziała, zwiększymy skalę.
+A | Say what you will do if the experiment succeeds. | Powiedz, co zrobicie, jeśli eksperyment się powiedzie. | If it works, we'll scale it. | Jeśli to zadziała, zwiększymy skalę.
+B | What will you do if the pilot works? | Co zrobicie, jeśli pilotaż zadziała? | If it works, we'll scale it. | Jeśli to zadziała, zwiększymy skalę.
+R | What would convince you? | Co by cię przekonało?
+A | Ask what evidence would change someone's view. | Zapytaj, jakie dowody zmieniłyby czyjeś zdanie. | What would convince you? | Co by cię przekonało?
+B | What would convince you? | Co by cię przekonało? | A clear improvement in retention would convince me. | Wyraźna poprawa retencji przekonałaby mnie.
+R | We need to establish a baseline. | Musimy ustalić punkt odniesienia.
+A | Say that you need a reference point before setting a target. | Powiedz, że potrzebujesz punktu odniesienia przed ustaleniem celu. | We need to establish a baseline. | Musimy ustalić punkt odniesienia.
+B | What should we do before setting a new target? | Co powinniśmy zrobić przed ustaleniem nowego celu? | We need to establish a baseline. | Musimy ustalić punkt odniesienia.
+R | How quickly should we roll it out? | Jak szybko powinniśmy to wdrażać?
+A | Ask about the appropriate rollout speed. | Zapytaj o odpowiednie tempo wdrożenia. | How quickly should we roll it out? | Jak szybko powinniśmy to wdrażać?
+B | How quickly should we roll it out? | Jak szybko powinniśmy to wdrażać? | I'd increase exposure in stages over several weeks. | Zwiększałbym zasięg etapami przez kilka tygodni.
+R | We don't want to lose momentum. | Nie chcemy stracić tempa.
+A | Say that you want to maintain the current pace of progress. | Powiedz, że chcesz utrzymać obecne tempo postępu. | We don't want to lose momentum. | Nie chcemy stracić tempa.
+B | Why should we make the next decision quickly? | Dlaczego powinniśmy szybko podjąć kolejną decyzję? | We don't want to lose momentum. | Nie chcemy stracić tempa.
+R | Which assumption should we challenge? | Które założenie powinniśmy podważyć?
+A | Ask which assumption deserves the most scrutiny. | Zapytaj, które założenie wymaga najdokładniejszego sprawdzenia. | Which assumption should we challenge? | Które założenie powinniśmy podważyć?
+B | Which assumption should we challenge? | Które założenie powinniśmy podważyć? | I'd challenge the assumption that more providers always improve conversion. | Podważyłbym założenie, że większa liczba wykonawców zawsze poprawia konwersję.
+R | What friction should we remove first? | Które utrudnienie powinniśmy usunąć najpierw?
+A | Ask which user obstacle should be eliminated first. | Zapytaj, którą przeszkodę dla użytkownika należy usunąć najpierw. | What friction should we remove first? | Które utrudnienie powinniśmy usunąć najpierw?
+B | What friction should we remove first? | Które utrudnienie powinniśmy usunąć najpierw? | I'd remove the unnecessary registration step first. | Najpierw usunąłbym zbędny krok rejestracji.
+R | What is the main trade-off? | Jaki jest główny kompromis?
+A | Ask about the most important balance between competing goals. | Zapytaj o najważniejszy kompromis między konkurującymi celami. | What is the main trade-off? | Jaki jest główny kompromis?
+B | What is the main trade-off? | Jaki jest główny kompromis? | The main trade-off is monetization versus customer experience. | Główny kompromis dotyczy monetyzacji i doświadczenia klienta.
+R | I'm leaning toward option two. | Skłaniam się ku opcji drugiej.
+A | Say that you currently prefer the second option. | Powiedz, że obecnie skłaniasz się ku drugiej opcji. | I'm leaning toward option two. | Skłaniam się ku opcji drugiej.
+B | Which option do you prefer at this stage? | Którą opcję preferujesz na tym etapie? | I'm leaning toward option two. | Skłaniam się ku opcji drugiej.
+R | The data supports this view. | Dane potwierdzają ten pogląd.
+A | Say that the evidence is consistent with your view. | Powiedz, że dane są zgodne z twoim poglądem. | The data supports this view. | Dane potwierdzają ten pogląd.
+B | Why do you believe this is the right interpretation? | Dlaczego uważasz, że to właściwa interpretacja? | The data supports this view. | Dane potwierdzają ten pogląd.
+R | I'd like to discuss this issue. | Chciałbym omówić tę kwestię.
+A | Politely introduce a topic you want to discuss. | Uprzejmie wprowadź temat, który chcesz omówić. | I'd like to discuss this issue. | Chciałbym omówić tę kwestię.
+B | What would you like to cover first? | Co chciałbyś omówić najpierw? | I'd like to discuss this issue. | Chciałbym omówić tę kwestię.
+R | What should we focus on first? | Na czym powinniśmy skupić się najpierw?
+A | Ask which priority should come first. | Zapytaj, który priorytet powinien być pierwszy. | What should we focus on first? | Na czym powinniśmy skupić się najpierw?
+B | What should we focus on first? | Na czym powinniśmy skupić się najpierw? | I'd focus on retention before adding more features. | Najpierw skupiłbym się na retencji, zanim dodamy kolejne funkcje.
+R | Could noise be affecting the result? | Czy szum w danych może wpływać na wynik?
+A | Ask whether random variation may be influencing the result. | Zapytaj, czy losowa zmienność może wpływać na wynik. | Could noise be affecting the result? | Czy szum w danych może wpływać na wynik?
+B | Could noise be affecting the result? | Czy szum w danych może wpływać na wynik? | Yes. The sample is still small and highly variable. | Tak. Próba jest nadal mała i bardzo zmienna.
+R | Why do you prefer to start small? | Dlaczego wolisz zacząć od małej skali?
+A | Ask why someone prefers a limited first step. | Zapytaj, dlaczego ktoś woli zacząć od ograniczonego zakresu. | Why do you prefer to start small? | Dlaczego wolisz zacząć od małej skali?
+B | Why do you prefer to start small? | Dlaczego wolisz zacząć od małej skali? | Because it limits the downside while we learn. | Ponieważ ogranicza to ryzyko, kiedy się uczymy.
+R | What guardrail should we set? | Jaką granicę bezpieczeństwa powinniśmy ustawić?
+A | Ask what safety limit should protect the experiment. | Zapytaj, jaki limit bezpieczeństwa powinien chronić eksperyment. | What guardrail should we set? | Jaką granicę bezpieczeństwa powinniśmy ustawić?
+B | What guardrail should we set? | Jaką granicę bezpieczeństwa powinniśmy ustawić? | I'd cap the acceptable monetization decline at five percent. | Ustaliłbym maksymalny akceptowalny spadek monetyzacji na pięć procent.
+R | What helped us meet the target? | Co pomogło nam osiągnąć cel?
+A | Ask what factors contributed to reaching the target. | Zapytaj, jakie czynniki pomogły osiągnąć cel. | What helped us meet the target? | Co pomogło nam osiągnąć cel?
+B | What helped us meet the target? | Co pomogło nam osiągnąć cel? | Better matching and faster follow-up helped us meet it. | Lepsze dopasowanie i szybszy kontakt pomogły nam osiągnąć cel.
+R | What would make us scale it? | Co skłoniłoby nas do zwiększenia skali?
+A | Ask what evidence would justify scaling the solution. | Zapytaj, jakie dowody uzasadniłyby zwiększenie skali rozwiązania. | What would make us scale it? | Co skłoniłoby nas do zwiększenia skali?
+B | What would make us scale it? | Co skłoniłoby nas do zwiększenia skali? | Stable conversion with no meaningful monetization loss would make us scale it. | Stabilna konwersja bez istotnej utraty monetyzacji skłoniłaby nas do zwiększenia skali.
+R | When should we phase it out? | Kiedy powinniśmy zacząć to wycofywać?
+A | Ask when the old solution should be removed gradually. | Zapytaj, kiedy należy stopniowo wycofać stare rozwiązanie. | When should we phase it out? | Kiedy powinniśmy zacząć to wycofywać?
+B | When should we phase it out? | Kiedy powinniśmy zacząć to wycofywać? | Once the new process proves more reliable. | Gdy nowy proces okaże się bardziej niezawodny.
+R | This could move the needle. | To mogłoby przynieść istotną zmianę.
+A | Say that something could have a meaningful business impact. | Powiedz, że coś może mieć istotny wpływ biznesowy. | This could move the needle. | To mogłoby przynieść istotną zmianę.
+B | Why is this initiative worth testing? | Dlaczego warto przetestować tę inicjatywę? | This could move the needle. | To mogłoby przynieść istotną zmianę.
+R | Where is the biggest bottleneck? | Gdzie jest największe wąskie gardło?
+A | Ask where the process is most constrained. | Zapytaj, gdzie proces jest najbardziej ograniczony. | Where is the biggest bottleneck? | Gdzie jest największe wąskie gardło?
+B | Where is the biggest bottleneck? | Gdzie jest największe wąskie gardło? | The biggest bottleneck is provider onboarding. | Największym wąskim gardłem jest onboarding wykonawców.
+R | This metric predicts retention. | Ta metryka przewiduje retencję.
+A | Say that a metric is useful for forecasting retention. | Powiedz, że dana metryka pomaga przewidywać retencję. | This metric predicts retention. | Ta metryka przewiduje retencję.
+B | Why are you tracking this metric? | Dlaczego śledzisz tę metrykę? | This metric predicts retention. | Ta metryka przewiduje retencję.
+R | How would you react to lower retention? | Jak zareagowałbyś na niższą retencję?
+A | Ask what someone would do if retention decreased. | Zapytaj, co ktoś zrobiłby w przypadku spadku retencji. | How would you react to lower retention? | Jak zareagowałbyś na niższą retencję?
+B | How would you react to lower retention? | Jak zareagowałbyś na niższą retencję? | I'd first identify whether the problem is activation, value, or pricing. | Najpierw sprawdziłbym, czy problem dotyczy aktywacji, wartości czy ceny.
+R | When should we stop the test? | Kiedy powinniśmy zatrzymać test?
+A | Ask what condition should trigger an early stop. | Zapytaj, jaki warunek powinien spowodować wcześniejsze zatrzymanie testu. | When should we stop the test? | Kiedy powinniśmy zatrzymać test?
+B | When should we stop the test? | Kiedy powinniśmy zatrzymać test? | We should stop if the guardrail is breached for several days. | Powinniśmy zatrzymać test, jeśli limit bezpieczeństwa jest przekroczony przez kilka dni.
+R | We met the target. | Osiągnęliśmy cel.
+A | Say that the team achieved the target. | Powiedz, że zespół osiągnął cel. | We met the target. | Osiągnęliśmy cel.
+B | How did we perform against the target? | Jak wypadliśmy względem celu? | We met the target. | Osiągnęliśmy cel.
+R | What do we need to verify first? | Co musimy zweryfikować najpierw?
+A | Ask what should be checked before anything else. | Zapytaj, co należy sprawdzić w pierwszej kolejności. | What do we need to verify first? | Co musimy zweryfikować najpierw?
+B | What do we need to verify first? | Co musimy zweryfikować najpierw? | We need to verify the data quality first. | Najpierw musimy zweryfikować jakość danych.
+R | I'm not convinced this will work. | Nie jestem przekonany, że to zadziała.
+A | Express doubt that an idea will succeed. | Wyraź wątpliwość, że ten pomysł zadziała. | I'm not convinced this will work. | Nie jestem przekonany, że to zadziała.
+B | Are you confident this approach will work? | Czy jesteś przekonany, że to podejście zadziała? | I'm not convinced this will work. | Nie jestem przekonany, że to zadziała.
+R | We need a reasonable threshold. | Potrzebujemy rozsądnego progu.
+A | Say that the decision needs a sensible cutoff point. | Powiedz, że decyzja wymaga rozsądnego progu. | We need a reasonable threshold. | Potrzebujemy rozsądnego progu.
+B | How should we define success or failure? | Jak powinniśmy zdefiniować sukces lub porażkę? | We need a reasonable threshold. | Potrzebujemy rozsądnego progu.
+R | What is the root cause? | Jaka jest przyczyna źródłowa?
+A | Ask about the underlying cause of the problem. | Zapytaj o źródłową przyczynę problemu. | What is the root cause? | Jaka jest przyczyna źródłowa?
+B | What is the root cause? | Jaka jest przyczyna źródłowa? | The root cause appears to be poor activation in the first week. | Przyczyną źródłową wydaje się słaba aktywacja w pierwszym tygodniu.
+R | When will we know more? | Kiedy będziemy wiedzieć więcej?
+A | Ask when more reliable information will be available. | Zapytaj, kiedy będziemy mieć bardziej wiarygodne informacje. | When will we know more? | Kiedy będziemy wiedzieć więcej?
+B | When will we know more? | Kiedy będziemy wiedzieć więcej? | We should know more after another two weeks of data. | Powinniśmy wiedzieć więcej po kolejnych dwóch tygodniach zbierania danych.
+R | What should we phase in first? | Co powinniśmy wprowadzić stopniowo jako pierwsze?
+A | Ask which part should be introduced gradually first. | Zapytaj, który element należy wprowadzić stopniowo jako pierwszy. | What should we phase in first? | Co powinniśmy wprowadzić stopniowo jako pierwsze?
+B | What should we phase in first? | Co powinniśmy wprowadzić stopniowo jako pierwsze? | I'd start with the lowest-risk categories. | Zacząłbym od kategorii o najniższym ryzyku.
+R | We fell short of the target. | Nie osiągnęliśmy celu.
+A | Say that the result was below the target. | Powiedz, że wynik był poniżej celu. | We fell short of the target. | Nie osiągnęliśmy celu.
+B | How did we perform against the target? | Jak wypadliśmy względem celu? | We fell short of the target. | Nie osiągnęliśmy celu.
+R | What evidence are we missing? | Jakich dowodów nam brakuje?
+A | Ask what information is still needed. | Zapytaj, jakich informacji nadal potrzebujemy. | What evidence are we missing? | Jakich dowodów nam brakuje?
+B | What evidence are we missing? | Jakich dowodów nam brakuje? | We're missing retention data and a larger sample. | Brakuje nam danych o retencji i większej próby.
+R | What could go wrong in execution? | Co może pójść nie tak podczas realizacji?
+A | Ask about practical risks during implementation. | Zapytaj o praktyczne ryzyka podczas realizacji. | What could go wrong in execution? | Co może pójść nie tak podczas realizacji?
+B | What could go wrong in execution? | Co może pójść nie tak podczas realizacji? | Ownership could be unclear and the rollout could be too slow. | Odpowiedzialność może być niejasna, a wdrożenie zbyt wolne.
+R | If retention drops, we'll react. | Jeśli retencja spadnie, zareagujemy.
+A | Say what you will do if retention decreases. | Powiedz, co zrobicie, jeśli retencja spadnie. | If retention drops, we'll react. | Jeśli retencja spadnie, zareagujemy.
+B | What will you do if retention drops? | Co zrobicie, jeśli retencja spadnie? | If retention drops, we'll react. | Jeśli retencja spadnie, zareagujemy.
+R | Why did we choose these categories? | Dlaczego wybraliśmy te kategorie?
+A | Ask for the reasoning behind the category selection. | Zapytaj o uzasadnienie wyboru tych kategorii. | Why did we choose these categories? | Dlaczego wybraliśmy te kategorie?
+B | Why did we choose these categories? | Dlaczego wybraliśmy te kategorie? | They have enough volume and represent different customer behaviors. | Mają wystarczający wolumen i reprezentują różne zachowania klientów.
+R | What evidence would be enough? | Jakie dowody byłyby wystarczające?
+A | Ask what level of evidence would support a decision. | Zapytaj, jaki poziom dowodów wystarczyłby do podjęcia decyzji. | What evidence would be enough? | Jakie dowody byłyby wystarczające?
+B | What evidence would be enough? | Jakie dowody byłyby wystarczające? | A stable improvement across several weeks would be enough. | Stabilna poprawa przez kilka tygodni byłaby wystarczająca.
+R | For now, let's focus here. | Na razie skupmy się na tym.
+A | Suggest keeping the current focus narrow for the moment. | Zaproponuj, aby na razie utrzymać wąski zakres koncentracji. | For now, let's focus here. | Na razie skupmy się na tym.
+B | Should we expand the scope now? | Czy powinniśmy teraz rozszerzyć zakres? | For now, let's focus here. | Na razie skupmy się na tym.
+R | Do we have enough data to decide? | Czy mamy wystarczająco dużo danych, żeby podjąć decyzję?
+A | Ask whether the available data is sufficient for a decision. | Zapytaj, czy dostępne dane wystarczą do podjęcia decyzji. | Do we have enough data to decide? | Czy mamy wystarczająco dużo danych, żeby podjąć decyzję?
+B | Do we have enough data to decide? | Czy mamy wystarczająco dużo danych, żeby podjąć decyzję? | Not yet. I'd wait for another week of results. | Jeszcze nie. Poczekałbym na kolejny tydzień wyników.
+R | The main issue is retention. | Głównym problemem jest retencja.
+A | Identify retention as the core problem. | Wskaż retencję jako główny problem. | The main issue is retention. | Głównym problemem jest retencja.
+B | What is the biggest problem with the product right now? | Jaki jest obecnie największy problem z produktem? | The main issue is retention. | Głównym problemem jest retencja.
+R | How do we know it's gaining traction? | Skąd wiemy, że to nabiera rozpędu?
+A | Ask what evidence shows that something is gaining momentum. | Zapytaj, jakie dowody pokazują, że coś nabiera rozpędu. | How do we know it's gaining traction? | Skąd wiemy, że to nabiera rozpędu?
+B | How do we know it's gaining traction? | Skąd wiemy, że to nabiera rozpędu? | Usage and conversion are both increasing week over week. | Zarówno użycie, jak i konwersja rosną z tygodnia na tydzień.

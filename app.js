@@ -3,22 +3,29 @@
 
   const $ = (id) => document.getElementById(id);
   const els = {
-    lessonFile: $('lessonFile'), lessonName: $('lessonName'), lessonMeta: $('lessonMeta'),
+    lessonSelect: $('lessonSelect'), lessonMeta: $('lessonMeta'), lessonFile: $('lessonFile'),
+    modeButtons: [...document.querySelectorAll('.mode-btn')], modeName: $('modeName'),
     counter: $('counter'), phaseLabel: $('phaseLabel'), progressBar: $('progressBar'),
-    sentenceText: $('sentenceText'), timer: $('timer'), timerHint: $('timerHint'),
+    sentenceText: $('sentenceText'), translationText: $('translationText'), timer: $('timer'), timerHint: $('timerHint'),
     prevBtn: $('prevBtn'), playBtn: $('playBtn'), repeatBtn: $('repeatBtn'), nextBtn: $('nextBtn'),
-    easyBtn: $('easyBtn'), hardBtn: $('hardBtn'),
+    easyBtn: $('easyBtn'), hardBtn: $('hardBtn'), rideScreenBtn: $('rideScreenBtn'),
     voiceSelect: $('voiceSelect'), testVoiceBtn: $('testVoiceBtn'), voiceInfo: $('voiceInfo'),
     speechRate: $('speechRate'), speechRateValue: $('speechRateValue'),
-    repetitionCount: $('repetitionCount'), pauseSeconds: $('pauseSeconds'), beepEnabled: $('beepEnabled'),
-    shuffleEnabled: $('shuffleEnabled'), hardOnly: $('hardOnly'), wakeLockEnabled: $('wakeLockEnabled'),
-    exportProgressBtn: $('exportProgressBtn'), progressFile: $('progressFile'), resetProgressBtn: $('resetProgressBtn'),
-    stats: $('stats'), installBtn: $('installBtn'),
-    rideScreenBtn: $('rideScreenBtn'), rideOverlay: $('rideOverlay'), rideOverlayStatus: $('rideOverlayStatus')
+    repetitionCount: $('repetitionCount'), pauseSeconds: $('pauseSeconds'), recallSeconds: $('recallSeconds'), businessSeconds: $('businessSeconds'),
+    beepEnabled: $('beepEnabled'), shuffleEnabled: $('shuffleEnabled'), hardOnly: $('hardOnly'), wakeLockEnabled: $('wakeLockEnabled'),
+    refreshLessonsBtn: $('refreshLessonsBtn'), syncKeyInput: $('syncKeyInput'), generateSyncKeyBtn: $('generateSyncKeyBtn'),
+    saveSyncKeyBtn: $('saveSyncKeyBtn'), copySyncKeyBtn: $('copySyncKeyBtn'), syncInfo: $('syncInfo'), syncBadge: $('syncBadge'),
+    exportProgressBtn: $('exportProgressBtn'), progressFile: $('progressFile'), resetProgressBtn: $('resetProgressBtn'), stats: $('stats'),
+    installBtn: $('installBtn'), rideOverlay: $('rideOverlay'), rideOverlayStatus: $('rideOverlayStatus')
   };
 
-  const STORE_KEY = 'ceoEnglishRideTrainerV2';
+  const STORE_KEY = 'ceoEnglishRideTrainerV4';
+  const MANUAL_REPLAY_BONUS_SECONDS = 2;
+  const MODE_NAMES = { R: 'Repeat', A: 'Active Recall', B: 'Business Response' };
+
   let state = loadState();
+  let serverConfig = { supabaseUrl: '', supabaseAnonKey: '' };
+  let manifest = { lessons: [] };
   let lesson = null;
   let queue = [];
   let queuePos = 0;
@@ -30,102 +37,176 @@
   let deferredInstallPrompt = null;
   let audioCtx = null;
   let voices = [];
-  const MANUAL_REPLAY_BONUS_SECONDS = 2;
+  let syncTimer = null;
+  let syncBusy = false;
 
   function defaultState() {
     return {
-      settings: { repetitions: 2, pauseSeconds: 7, beep: true, shuffle: false, hardOnly: false, wakeLock: true, speechRate: 0.9, voiceURI: '' },
+      settings: {
+        mode: 'R', repetitions: 2, pauseSeconds: 7, recallSeconds: 7, businessSeconds: 15,
+        beep: true, shuffle: false, hardOnly: false, wakeLock: true, speechRate: 0.9, voiceURI: ''
+      },
       lessons: {},
       lastLessonId: null,
-      lessonTexts: {}
+      localLessons: {},
+      syncKey: ''
+    };
+  }
+
+  function deepMergeState(raw) {
+    const d = defaultState();
+    return {
+      ...d,
+      ...raw,
+      settings: { ...d.settings, ...(raw?.settings || {}) },
+      lessons: raw?.lessons || {},
+      localLessons: raw?.localLessons || {}
     };
   }
 
   function loadState() {
-    try { return { ...defaultState(), ...JSON.parse(localStorage.getItem(STORE_KEY) || '{}') }; }
+    try { return deepMergeState(JSON.parse(localStorage.getItem(STORE_KEY) || '{}')); }
     catch { return defaultState(); }
   }
   function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 
-  function normalizeText(text) { return text.trim().replace(/\s+/g, ' ').toLowerCase(); }
+  function normalizeText(text) { return String(text || '').trim().replace(/\s+/g, ' '); }
   function hashText(str) {
     let h = 2166136261;
     for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
     return ('00000000' + (h >>> 0).toString(16)).slice(-8);
   }
-  function sentenceId(text) { return `s-${hashText(normalizeText(text))}`; }
+  function exerciseId(mode, promptEn, answerEn) {
+    return `e-${hashText(`${mode}|${normalizeText(promptEn).toLowerCase()}|${normalizeText(answerEn).toLowerCase()}`)}`;
+  }
   function lessonIdFromFilename(name) { return (name || 'lesson').replace(/\.txt$/i, '').trim() || 'lesson'; }
 
-  function parseLesson(text, filename) {
-    const sentences = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean).map((text, i) => ({ id: sentenceId(text), index: i + 1, text }));
-    return { id: lessonIdFromFilename(filename), filename, sentences, importedAt: new Date().toISOString() };
+  function parseLesson(text, filename, explicitId = null, title = null) {
+    const exercises = [];
+    let lineNo = 0;
+    for (const raw of String(text || '').split(/\r?\n/)) {
+      lineNo += 1;
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) continue;
+      const parts = line.split('|').map(x => x.trim());
+      const type = (parts[0] || '').toUpperCase();
+      if (type === 'R' && parts.length >= 3) {
+        const [_, en, pl] = parts;
+        exercises.push({ id: exerciseId('R', en, en), mode: 'R', index: exercises.length + 1, sourceLine: lineNo, promptEn: en, promptPl: pl, answerEn: en, answerPl: pl });
+      } else if ((type === 'A' || type === 'B') && parts.length >= 5) {
+        const [_, promptEn, promptPl, answerEn, answerPl] = parts;
+        exercises.push({ id: exerciseId(type, promptEn, answerEn), mode: type, index: exercises.length + 1, sourceLine: lineNo, promptEn, promptPl, answerEn, answerPl });
+      } else if (parts.length === 1 && line) {
+        // Backward-compatible old lesson format: one English sentence per line.
+        exercises.push({ id: exerciseId('R', line, line), mode: 'R', index: exercises.length + 1, sourceLine: lineNo, promptEn: line, promptPl: '', answerEn: line, answerPl: '' });
+      }
+    }
+    const id = explicitId || lessonIdFromFilename(filename);
+    return { id, title: title || id, filename, exercises, loadedAt: new Date().toISOString() };
   }
 
-  function emptySentenceProgress(sentence) {
-    return { id: sentence.id, text: sentence.text, played: 0, easy: 0, hard: 0, score: null, lastPracticedAt: null, lastRating: null };
+  function emptyExerciseProgress(ex) {
+    return { id: ex.id, mode: ex.mode, played: 0, easy: 0, hard: 0, score: null, lastPracticedAt: null, lastRating: null };
   }
 
   function reconcileProgress(currentLesson) {
-    const old = state.lessons[currentLesson.id] || { lessonId: currentLesson.id, sessions: 0, totalPlays: 0, createdAt: new Date().toISOString(), sentences: {} };
-    const nextSentences = {};
-    for (const s of currentLesson.sentences) {
-      nextSentences[s.id] = old.sentences?.[s.id] ? { ...old.sentences[s.id], text: s.text } : emptySentenceProgress(s);
-    }
-    state.lessons[currentLesson.id] = { ...old, lessonId: currentLesson.id, inputFile: currentLesson.filename, sentenceCount: currentLesson.sentences.length, sentences: nextSentences, updatedAt: new Date().toISOString() };
+    const old = state.lessons[currentLesson.id] || {
+      lessonId: currentLesson.id, sessions: 0, totalPlays: 0,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), exercises: {}
+    };
+    const next = {};
+    for (const ex of currentLesson.exercises) next[ex.id] = old.exercises?.[ex.id] ? { ...old.exercises[ex.id], mode: ex.mode } : emptyExerciseProgress(ex);
+    state.lessons[currentLesson.id] = {
+      ...old, lessonId: currentLesson.id, inputFile: currentLesson.filename,
+      exerciseCount: currentLesson.exercises.length, exercises: next,
+      updatedAt: old.updatedAt || new Date().toISOString()
+    };
     state.lastLessonId = currentLesson.id;
-    state.lessonTexts[currentLesson.id] = { filename: currentLesson.filename, text: currentLesson.sentences.map(s => s.text).join('\n') };
     saveState();
   }
 
-  function getProgress() { return lesson ? state.lessons[lesson.id] : null; }
-  function isHard(s) {
-    const p = getProgress()?.sentences?.[s.id];
-    return p ? (p.hard > p.easy || p.lastRating === 'hard') : false;
+  function touchProgress() {
+    const p = getProgress();
+    if (p) p.updatedAt = new Date().toISOString();
   }
 
-  function buildQueue() {
-    if (!lesson) { queue = []; queuePos = 0; return; }
-    queue = lesson.sentences.filter(s => !state.settings.hardOnly || isHard(s));
-    if (state.settings.shuffle) {
-      for (let i = queue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [queue[i], queue[j]] = [queue[j], queue[i]]; }
-    }
-    queuePos = Math.min(queuePos, Math.max(0, queue.length - 1));
+  function getProgress() { return lesson ? state.lessons[lesson.id] : null; }
+  function progressFor(ex) { return getProgress()?.exercises?.[ex.id] || null; }
+  function isHard(ex) {
+    const p = progressFor(ex);
+    return p ? ((p.hard || 0) > (p.easy || 0) || p.lastRating === 'hard') : false;
+  }
+
+  function compareExercises(a, b) {
+    const pa = progressFor(a) || { played: 0, lastPracticedAt: null };
+    const pb = progressFor(b) || { played: 0, lastPracticedAt: null };
+    if ((pa.played || 0) !== (pb.played || 0)) return (pa.played || 0) - (pb.played || 0);
+    const ta = pa.lastPracticedAt ? Date.parse(pa.lastPracticedAt) : 0;
+    const tb = pb.lastPracticedAt ? Date.parse(pb.lastPracticedAt) : 0;
+    if (ta !== tb) return ta - tb;
+    if (state.settings.shuffle) return Math.random() - 0.5;
+    return a.index - b.index;
+  }
+
+  function buildQueue({ resetPosition = true } = {}) {
+    if (!lesson) { queue = []; queuePos = 0; updateUI(); return; }
+    queue = lesson.exercises
+      .filter(ex => ex.mode === state.settings.mode)
+      .filter(ex => !state.settings.hardOnly || isHard(ex))
+      .sort(compareExercises);
+    if (resetPosition) queuePos = 0;
+    else queuePos = Math.min(queuePos, Math.max(0, queue.length - 1));
     updateUI();
   }
 
-  function currentSentence() { return queue[queuePos] || null; }
+  function currentExercise() { return queue[queuePos] || null; }
+
+  function displayExercisePart(ex, part = 'prompt') {
+    if (!ex) return;
+    const useAnswer = part === 'answer';
+    els.sentenceText.textContent = useAnswer ? ex.answerEn : ex.promptEn;
+    els.translationText.textContent = useAnswer ? ex.answerPl : ex.promptPl;
+  }
 
   function updateUI() {
+    els.modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === state.settings.mode));
+    els.modeName.textContent = MODE_NAMES[state.settings.mode] || state.settings.mode;
     if (!lesson) {
-      els.lessonName.textContent = 'No lesson loaded'; els.lessonMeta.textContent = '';
+      els.lessonMeta.textContent = '';
       els.counter.textContent = '—'; els.progressBar.style.width = '0%'; els.stats.innerHTML = '';
+      els.sentenceText.textContent = 'No lesson loaded.'; els.translationText.textContent = '';
       return;
     }
-    els.lessonName.textContent = lesson.id;
-    els.lessonMeta.textContent = `${lesson.sentences.length} sentences`;
-    const s = currentSentence();
-    if (s) {
-      els.counter.textContent = `${queuePos + 1} / ${queue.length}`;
-      els.sentenceText.textContent = s.text;
+    const allForMode = lesson.exercises.filter(x => x.mode === state.settings.mode);
+    els.lessonMeta.textContent = `${allForMode.length} exercises in ${MODE_NAMES[state.settings.mode]}`;
+    const ex = currentExercise();
+    if (ex) {
+      const p = progressFor(ex);
+      els.counter.textContent = `${queuePos + 1} / ${queue.length} · reps ${p?.played || 0}`;
       els.progressBar.style.width = `${((queuePos + 1) / Math.max(1, queue.length)) * 100}%`;
+      displayExercisePart(ex, 'prompt');
     } else {
-      els.counter.textContent = `0 / 0`; els.sentenceText.textContent = state.settings.hardOnly ? 'No sentences are currently marked difficult.' : 'No sentences in lesson.';
+      els.counter.textContent = '0 / 0';
       els.progressBar.style.width = '0%';
+      els.sentenceText.textContent = state.settings.hardOnly ? 'No difficult exercises in this mode.' : 'No exercises in this mode.';
+      els.translationText.textContent = '';
     }
     updateStats();
   }
 
   function updateStats() {
-    const p = getProgress(); if (!p) return;
-    const items = Object.values(p.sentences || {});
+    const p = getProgress(); if (!p || !lesson) return;
+    const modeExercises = lesson.exercises.filter(x => x.mode === state.settings.mode);
+    const items = modeExercises.map(x => p.exercises[x.id]).filter(Boolean);
     const played = items.reduce((a, x) => a + (x.played || 0), 0);
     const hard = items.filter(x => (x.hard || 0) > (x.easy || 0) || x.lastRating === 'hard').length;
-    const practiced = items.filter(x => x.played > 0).length;
+    const practiced = items.filter(x => (x.played || 0) > 0).length;
+    const minReps = items.length ? Math.min(...items.map(x => x.played || 0)) : 0;
     els.stats.innerHTML = `
-      <div class="stat"><strong>${practiced}/${items.length}</strong><span>practised sentences</span></div>
-      <div class="stat"><strong>${played}</strong><span>total plays</span></div>
-      <div class="stat"><strong>${hard}</strong><span>currently difficult</span></div>
-      <div class="stat"><strong>${p.sessions || 0}</strong><span>sessions started</span></div>`;
+      <div class="stat"><strong>${practiced}/${items.length}</strong><span>practised in this mode</span></div>
+      <div class="stat"><strong>${played}</strong><span>total completed practices</span></div>
+      <div class="stat"><strong>${minReps}</strong><span>lowest repetition count</span></div>
+      <div class="stat"><strong>${hard}</strong><span>currently difficult</span></div>`;
   }
 
   function setPhase(label, hint = '') { els.phaseLabel.textContent = label; els.timerHint.textContent = hint; }
@@ -154,29 +235,28 @@
   function selectedVoice() { return voices.find(v => v.voiceURI === els.voiceSelect.value) || null; }
   function showVoiceInfo() {
     const v = selectedVoice();
-    if (!v) els.voiceInfo.textContent = 'No English voice exposed by this browser.';
-    else els.voiceInfo.textContent = `${v.lang} · ${v.localService ? 'installed/local' : 'network voice'}`;
+    els.voiceInfo.textContent = v ? `${v.lang} · ${v.localService ? 'installed/local' : 'network voice'}` : 'No English voice exposed by this browser.';
   }
 
   function speak(text) {
     return new Promise((resolve, reject) => {
-      if (!('speechSynthesis' in window)) { reject(new Error('Speech synthesis is not supported by this browser.')); return; }
+      if (!('speechSynthesis' in window)) return reject(new Error('Speech synthesis is not supported by this browser.'));
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       const v = selectedVoice(); if (v) u.voice = v;
       u.lang = v?.lang || 'en-US';
-      u.rate = Number(state.settings.speechRate || 0.9);
-      u.pitch = 1;
+      u.rate = Number(state.settings.speechRate || 0.9); u.pitch = 1;
       u.onend = () => resolve();
-      u.onerror = (e) => reject(e.error || e);
+      u.onerror = e => reject(e.error || e);
       window.speechSynthesis.speak(u);
     });
   }
 
-  function sleep(ms, token) {
+  function sleep(ms, token, hint = '') {
     return new Promise(resolve => {
       let remaining = ms;
       let lastTick = Date.now();
+      if (hint) els.timerHint.textContent = hint;
       function tick() {
         if (token !== currentAbort || !running) return resolve('aborted');
         const now = Date.now();
@@ -201,43 +281,107 @@
     } catch {}
   }
 
-  function markPlayed(s) {
-    const p = getProgress(); if (!p || !s) return;
-    const sp = p.sentences[s.id]; sp.played = (sp.played || 0) + 1; sp.lastPracticedAt = new Date().toISOString();
-    p.totalPlays = (p.totalPlays || 0) + 1; p.lastPracticedAt = new Date().toISOString(); saveState(); updateStats();
+  function markPlayed(ex) {
+    const p = getProgress(); if (!p || !ex) return;
+    const ep = p.exercises[ex.id];
+    ep.played = (ep.played || 0) + 1;
+    ep.lastPracticedAt = new Date().toISOString();
+    p.totalPlays = (p.totalPlays || 0) + 1;
+    p.lastPracticedAt = new Date().toISOString();
+    touchProgress(); saveState(); updateStats(); scheduleServerPush();
   }
 
-  async function runCurrentSentence(options = {}) {
-    const s = currentSentence(); if (!s) { stopTraining('No sentences to practise'); return; }
-    const token = ++currentAbort;
-    setPhase('Listening', 'Listen carefully'); els.timer.textContent = '♪';
-    try { await speak(s.text); } catch (err) { setPhase('TTS error', String(err)); stopTraining(); return; }
-    if (token !== currentAbort || !running) return;
-    markPlayed(s);
-    const reps = Number(state.settings.repetitions);
-    const pauseBonusSeconds = Number(options.pauseBonusSeconds || 0);
-    const pause = (Number(state.settings.pauseSeconds) + pauseBonusSeconds) * 1000;
-    for (let rep = 1; rep <= reps; rep++) {
-      const bonusHint = pauseBonusSeconds ? ` · +${pauseBonusSeconds}s` : '';
-      setPhase(`Repeat ${rep}/${reps}`, `Say the sentence aloud${bonusHint}`);
-      const status = await sleep(pause, token); if (status === 'aborted') return;
-      if (rep < reps) beep();
+  async function waitPausedIfNeeded(token) {
+    while (paused && running && token === currentAbort) await new Promise(r => setTimeout(r, 120));
+    return token === currentAbort && running;
+  }
+
+  async function speakSafely(text, token) {
+    if (!(await waitPausedIfNeeded(token))) return false;
+    try { await speak(text); } catch {}
+    return token === currentAbort && running;
+  }
+
+  async function repetitionWindows(token, bonus) {
+    const reps = Number(state.settings.repetitions || 2);
+    const seconds = Number(state.settings.pauseSeconds || 7) + bonus;
+    for (let i = 1; i <= reps; i++) {
+      setPhase(`Repeat ${i}/${reps}`, 'Repeat the English answer aloud');
+      const result = await sleep(seconds * 1000, token, 'Repeat the English answer aloud');
+      if (result === 'aborted') return false;
+      if (i < reps) beep();
     }
+    return true;
+  }
+
+  async function runCurrentExercise(options = {}) {
+    const ex = currentExercise();
+    if (!ex) { stopTraining('No exercise available.'); return; }
+    const token = ++currentAbort;
+    const bonus = Number(options.pauseBonusSeconds || 0);
+    els.timer.textContent = '—';
+
+    if (ex.mode === 'R') {
+      displayExercisePart(ex, 'answer');
+      setPhase('Listen', 'Listen to the model sentence');
+      if (!(await speakSafely(ex.answerEn, token))) return;
+      beep();
+      if (!(await repetitionWindows(token, bonus))) return;
+    } else if (ex.mode === 'A') {
+      displayExercisePart(ex, 'prompt');
+      setPhase('Cue', 'Listen to the cue');
+      if (!(await speakSafely(ex.promptEn, token))) return;
+      beep();
+      setPhase('Recall', 'Say the target sentence from memory');
+      if ((await sleep((Number(state.settings.recallSeconds || 7) + bonus) * 1000, token, 'Say the target sentence from memory')) === 'aborted') return;
+      displayExercisePart(ex, 'answer');
+      setPhase('Model answer', 'Listen and compare');
+      if (!(await speakSafely(ex.answerEn, token))) return;
+      beep();
+      if (!(await repetitionWindows(token, bonus))) return;
+    } else {
+      displayExercisePart(ex, 'prompt');
+      setPhase('Business question', 'Listen, then answer freely');
+      if (!(await speakSafely(ex.promptEn, token))) return;
+      beep();
+      setPhase('Your answer', 'Answer in your own words');
+      if ((await sleep((Number(state.settings.businessSeconds || 15) + bonus) * 1000, token, 'Answer in your own words')) === 'aborted') return;
+      displayExercisePart(ex, 'answer');
+      setPhase('Model answer', 'Listen to one strong answer');
+      if (!(await speakSafely(ex.answerEn, token))) return;
+      beep();
+      if (!(await repetitionWindows(token, bonus))) return;
+    }
+
     if (token !== currentAbort || !running) return;
-    if (queuePos < queue.length - 1) { queuePos++; updateUI(); await runCurrentSentence(); }
-    else { stopTraining('Lesson complete'); setPhase('Complete', 'Lesson finished'); els.timer.textContent = '✓'; }
+    markPlayed(ex);
+    advanceAfterCompletion();
+  }
+
+  function advanceAfterCompletion() {
+    if (!queue.length) return;
+    if (queuePos < queue.length - 1) {
+      queuePos += 1;
+      updateUI();
+      setTimeout(() => { if (running && !paused) runCurrentExercise(); }, 280);
+    } else {
+      // Re-sort after completing a full pass so the least-practised exercise becomes first again.
+      buildQueue({ resetPosition: true });
+      setTimeout(() => { if (running && !paused) runCurrentExercise(); }, 280);
+    }
   }
 
   async function startTraining() {
     if (!lesson || !queue.length) return;
     if (!running) {
-      running = true; paused = false; getProgress().sessions = (getProgress().sessions || 0) + 1; saveState();
+      running = true; paused = false;
+      const p = getProgress(); p.sessions = (p.sessions || 0) + 1; touchProgress(); saveState(); scheduleServerPush();
       if (state.settings.wakeLock) await requestWakeLock();
-      setPlayIcon(); runCurrentSentence();
+      setPlayIcon(); runCurrentExercise();
     } else if (paused) {
-      paused = false; if (window.speechSynthesis.paused) window.speechSynthesis.resume(); setPhase('Resumed'); setPlayIcon();
+      paused = false; if (window.speechSynthesis?.paused) window.speechSynthesis.resume(); setPhase('Resumed'); setPlayIcon();
     } else {
-      paused = true; if (window.speechSynthesis.speaking) window.speechSynthesis.pause(); setPhase('Paused', 'Press Play to continue'); setPlayIcon();
+      paused = true; if (window.speechSynthesis?.speaking) window.speechSynthesis.pause(); setPhase('Paused', 'Press Play to continue'); setPlayIcon();
     }
   }
 
@@ -247,50 +391,31 @@
   }
 
   async function startManualPlaybackAtCurrent() {
-    stopTraining();
-    running = true;
-    paused = false;
+    stopTraining(); running = true; paused = false;
     if (state.settings.wakeLock) await requestWakeLock();
-    setPlayIcon();
-    runCurrentSentence({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
+    setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
-
-  async function repeatCurrent() {
-    if (!lesson || !queue.length) return;
-    await startManualPlaybackAtCurrent();
+  async function repeatCurrent() { if (lesson && queue.length) await startManualPlaybackAtCurrent(); }
+  async function nextExercise() {
+    if (!queue.length) return; stopTraining(); queuePos = Math.min(queue.length - 1, queuePos + 1); updateUI();
+    running = true; paused = false; if (state.settings.wakeLock) await requestWakeLock(); setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
-  async function nextSentence() {
-    if (!queue.length) return;
-    stopTraining();
-    queuePos = Math.min(queue.length - 1, queuePos + 1);
-    updateUI();
-    running = true; paused = false;
-    if (state.settings.wakeLock) await requestWakeLock();
-    setPlayIcon();
-    runCurrentSentence({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
-  }
-  async function prevSentence() {
-    if (!queue.length) return;
-    stopTraining();
-    queuePos = Math.max(0, queuePos - 1);
-    updateUI();
-    running = true; paused = false;
-    if (state.settings.wakeLock) await requestWakeLock();
-    setPlayIcon();
-    runCurrentSentence({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
+  async function prevExercise() {
+    if (!queue.length) return; stopTraining(); queuePos = Math.max(0, queuePos - 1); updateUI();
+    running = true; paused = false; if (state.settings.wakeLock) await requestWakeLock(); setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
 
   function rateCurrent(kind) {
-    const s = currentSentence(), p = getProgress(); if (!s || !p) return;
-    const sp = p.sentences[s.id]; sp[kind] = (sp[kind] || 0) + 1; sp.lastRating = kind; sp.lastPracticedAt = new Date().toISOString();
-    sp.score = (sp.easy + sp.hard) ? Number((sp.easy / (sp.easy + sp.hard)).toFixed(3)) : null; saveState();
-    if (state.settings.hardOnly) buildQueue(); else updateStats();
+    const ex = currentExercise(), p = getProgress(); if (!ex || !p) return;
+    const ep = p.exercises[ex.id]; ep[kind] = (ep[kind] || 0) + 1; ep.lastRating = kind; ep.lastPracticedAt = new Date().toISOString();
+    ep.score = (ep.easy + ep.hard) ? Number((ep.easy / (ep.easy + ep.hard)).toFixed(3)) : null;
+    touchProgress(); saveState(); scheduleServerPush();
+    if (state.settings.hardOnly) buildQueue({ resetPosition: true }); else updateStats();
   }
 
   async function requestWakeLock() {
     if (!('wakeLock' in navigator)) return;
-    try { wakeLock = await navigator.wakeLock.request('screen'); }
-    catch {}
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch {}
   }
   async function releaseWakeLock() { try { await wakeLock?.release(); } catch {} wakeLock = null; }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && running && state.settings.wakeLock) requestWakeLock(); });
@@ -300,112 +425,314 @@
     els.rideOverlay.hidden = false;
     els.rideOverlayStatus.textContent = running ? 'Training is running · tap to exit' : 'Ride screen · tap to exit';
     if (state.settings.wakeLock) await requestWakeLock();
-    try {
-      if (document.documentElement.requestFullscreen && !document.fullscreenElement) await document.documentElement.requestFullscreen();
-    } catch {}
+    try { if (document.documentElement.requestFullscreen && !document.fullscreenElement) await document.documentElement.requestFullscreen(); } catch {}
   }
-
   async function exitRideScreen() {
-    if (!els.rideOverlay) return;
-    els.rideOverlay.hidden = true;
+    if (!els.rideOverlay) return; els.rideOverlay.hidden = true;
     try { if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen(); } catch {}
   }
 
+  // ---------- Server lessons ----------
+  async function loadServerConfig() {
+    try {
+      const r = await fetch('server-config.json', { cache: 'no-store' });
+      if (r.ok) serverConfig = { ...serverConfig, ...(await r.json()) };
+    } catch {}
+    updateSyncStatus();
+  }
+
+  async function loadManifest() {
+    try {
+      const r = await fetch('lessons/index.json', { cache: 'no-store' });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      manifest = await r.json();
+      populateLessonSelect();
+      return true;
+    } catch (e) {
+      // Fall back to locally imported/cached lessons.
+      const locals = Object.values(state.localLessons || {}).map(x => ({ id: x.id, title: x.title || x.id, local: true }));
+      manifest = { lessons: locals };
+      populateLessonSelect();
+      return false;
+    }
+  }
+
+  function populateLessonSelect() {
+    els.lessonSelect.innerHTML = '';
+    for (const item of manifest.lessons || []) {
+      const opt = document.createElement('option'); opt.value = item.id; opt.textContent = item.title || item.id; els.lessonSelect.appendChild(opt);
+    }
+    const preferred = state.lastLessonId;
+    if (preferred && [...els.lessonSelect.options].some(o => o.value === preferred)) els.lessonSelect.value = preferred;
+  }
+
+  async function loadLessonById(id) {
+    stopTraining();
+    const item = (manifest.lessons || []).find(x => x.id === id);
+    if (!item) return;
+    let text = '';
+    let filename = `${id}.txt`;
+    if (item.local && state.localLessons[id]) {
+      text = state.localLessons[id].text; filename = state.localLessons[id].filename || filename;
+    } else {
+      try {
+        const r = await fetch(item.file, { cache: 'no-store' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        text = await r.text();
+        filename = item.file.split('/').pop() || filename;
+        state.localLessons[id] = { id, title: item.title || id, filename, text, cachedAt: new Date().toISOString(), serverFile: item.file };
+        saveState();
+      } catch {
+        const cached = state.localLessons[id];
+        if (!cached) throw new Error('Lesson could not be loaded from the server and no offline copy is available.');
+        text = cached.text; filename = cached.filename || filename;
+      }
+    }
+    lesson = parseLesson(text, filename, item.id, item.title || item.id);
+    reconcileProgress(lesson);
+    state.lastLessonId = lesson.id; saveState();
+    await syncCurrentLessonOnOpen();
+    buildQueue({ resetPosition: true });
+    els.lessonSelect.value = lesson.id;
+  }
+
+  async function importLessonFile(file) {
+    const text = await file.text();
+    const id = lessonIdFromFilename(file.name);
+    state.localLessons[id] = { id, title: id, filename: file.name, text, cachedAt: new Date().toISOString(), local: true };
+    const existing = (manifest.lessons || []).find(x => x.id === id);
+    if (!existing) manifest.lessons.push({ id, title: id, local: true });
+    populateLessonSelect();
+    await loadLessonById(id);
+  }
+
+  // ---------- Server progress sync ----------
+  function serverConfigured() { return Boolean(serverConfig.supabaseUrl && serverConfig.supabaseAnonKey); }
+  function syncConfigured() { return serverConfigured() && Boolean(state.syncKey); }
+
+  async function sha256Hex(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function baseApiHeaders() {
+    return {
+      'apikey': serverConfig.supabaseAnonKey,
+      'Authorization': `Bearer ${serverConfig.supabaseAnonKey}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  function setSyncBadge(label, cls = '') {
+    els.syncBadge.textContent = label;
+    els.syncBadge.className = `sync-badge ${cls}`.trim();
+  }
+
+  function updateSyncStatus(message = '') {
+    els.syncKeyInput.value = state.syncKey || '';
+    if (!serverConfigured()) {
+      setSyncBadge('Local');
+      els.syncInfo.textContent = message || 'Server progress sync is not configured. Lessons can still load from GitHub Pages.';
+    } else if (!state.syncKey) {
+      setSyncBadge('Key needed', 'error');
+      els.syncInfo.textContent = message || 'Server is configured. Enter the same sync key on each device.';
+    } else {
+      setSyncBadge('Server', 'ok');
+      els.syncInfo.textContent = message || 'Server sync is configured for this device.';
+    }
+  }
+
+  async function fetchRemoteProgress(lessonId) {
+    if (!syncConfigured()) return null;
+    const base = serverConfig.supabaseUrl.replace(/\/$/, '');
+    const url = `${base}/rest/v1/rpc/get_lesson_progress`;
+    const r = await fetch(url, {
+      method: 'POST', headers: baseApiHeaders(), cache: 'no-store',
+      body: JSON.stringify({ p_sync_key: state.syncKey, p_lesson_id: lessonId })
+    });
+    if (!r.ok) throw new Error(`Sync read failed: ${r.status}`);
+    return await r.json();
+  }
+
+  async function pushRemoteProgress(lessonId) {
+    if (!syncConfigured() || !state.lessons[lessonId] || syncBusy) return;
+    syncBusy = true; setSyncBadge('Syncing', 'busy');
+    try {
+      const base = serverConfig.supabaseUrl.replace(/\/$/, '');
+      const url = `${base}/rest/v1/rpc/set_lesson_progress`;
+      const data = state.lessons[lessonId];
+      const r = await fetch(url, {
+        method: 'POST', headers: baseApiHeaders(),
+        body: JSON.stringify({ p_sync_key: state.syncKey, p_lesson_id: lessonId, p_data: data })
+      });
+      if (!r.ok) throw new Error(`Sync write failed: ${r.status}`);
+      setSyncBadge('Synced', 'ok'); els.syncInfo.textContent = `Progress synced at ${new Date().toLocaleTimeString()}.`;
+    } catch (e) {
+      setSyncBadge('Sync error', 'error'); els.syncInfo.textContent = `${e.message}. Local progress is still saved on this device.`;
+    } finally { syncBusy = false; }
+  }
+
+  function scheduleServerPush() {
+    if (!lesson || !syncConfigured()) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => pushRemoteProgress(lesson.id), 650);
+  }
+
+  function mergeRemoteIntoCurrent(remote) {
+    if (!lesson || !remote) return false;
+    const local = state.lessons[lesson.id];
+    const remoteTime = Date.parse(remote.updatedAt || 0) || 0;
+    const localTime = Date.parse(local?.updatedAt || 0) || 0;
+    if (remoteTime > localTime) {
+      state.lessons[lesson.id] = { ...remote };
+      reconcileProgress(lesson);
+      saveState();
+      return true;
+    }
+    return false;
+  }
+
+  async function syncCurrentLessonOnOpen() {
+    if (!lesson) return;
+    if (!syncConfigured()) { updateSyncStatus(); return; }
+    setSyncBadge('Syncing', 'busy');
+    try {
+      const remote = await fetchRemoteProgress(lesson.id);
+      if (remote) {
+        const usedRemote = mergeRemoteIntoCurrent(remote);
+        if (!usedRemote) await pushRemoteProgress(lesson.id);
+      } else {
+        await pushRemoteProgress(lesson.id);
+      }
+      setSyncBadge('Synced', 'ok');
+      els.syncInfo.textContent = 'Server progress loaded. The least-practised exercises will start first.';
+    } catch (e) {
+      setSyncBadge('Sync error', 'error');
+      els.syncInfo.textContent = `${e.message}. Using local progress.`;
+    }
+  }
+
+  function generateSyncKey() {
+    const arr = new Uint8Array(18); crypto.getRandomValues(arr);
+    return [...arr].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+
+  // ---------- Progress import/export ----------
   function exportProgress() {
     if (!lesson) return;
     const p = getProgress();
-    const payload = {
-      schemaVersion: 2,
-      lessonId: lesson.id,
-      inputFile: lesson.filename,
-      sentenceCount: lesson.sentences.length,
-      exportedAt: new Date().toISOString(),
-      settings: { ...state.settings },
-      summary: { sessions: p.sessions || 0, totalPlays: p.totalPlays || 0, lastPracticedAt: p.lastPracticedAt || null },
-      sentences: lesson.sentences.map(s => ({ index: s.index, ...p.sentences[s.id] }))
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    downloadBlob(blob, `${lesson.id}.progress.json`);
+    const payload = { schemaVersion: 4, lessonId: lesson.id, exportedAt: new Date().toISOString(), progress: p };
+    downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }), `${lesson.id}.progress.json`);
   }
-
   function downloadBlob(blob, filename) {
-    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-
   async function importProgressFile(file) {
     const data = JSON.parse(await file.text());
-    if (!data.lessonId) throw new Error('Missing lessonId in progress file.');
-    const sentenceMap = {};
-    for (const item of data.sentences || []) if (item.id) sentenceMap[item.id] = item;
-    const existing = state.lessons[data.lessonId] || { lessonId: data.lessonId, sentences: {} };
-    state.lessons[data.lessonId] = { ...existing, ...data, sentences: { ...existing.sentences, ...sentenceMap } };
-    if (data.settings) state.settings = { ...state.settings, ...data.settings };
-    saveState(); applySettingsToUI(); if (lesson?.id === data.lessonId) { reconcileProgress(lesson); buildQueue(); }
+    const lessonId = data.lessonId || data.progress?.lessonId;
+    const progress = data.progress || data;
+    if (!lessonId) throw new Error('Missing lessonId.');
+    state.lessons[lessonId] = progress; saveState();
+    if (lesson?.id === lessonId) { reconcileProgress(lesson); buildQueue({ resetPosition: true }); scheduleServerPush(); }
   }
-
   function resetProgress() {
-    if (!lesson) return;
-    if (!confirm(`Reset all progress for ${lesson.id}?`)) return;
-    const old = state.lessons[lesson.id];
-    state.lessons[lesson.id] = { lessonId: lesson.id, inputFile: lesson.filename, sentenceCount: lesson.sentences.length, sessions: 0, totalPlays: 0, createdAt: old?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(), sentences: {} };
-    reconcileProgress(lesson); buildQueue();
+    if (!lesson || !confirm(`Reset all progress for ${lesson.id}?`)) return;
+    state.lessons[lesson.id] = { lessonId: lesson.id, sessions: 0, totalPlays: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), exercises: {} };
+    reconcileProgress(lesson); buildQueue({ resetPosition: true }); scheduleServerPush();
   }
 
-  async function importLessonFile(file) { const text = await file.text(); loadLesson(parseLesson(text, file.name)); }
-  function loadLesson(parsed) { stopTraining(); lesson = parsed; reconcileProgress(lesson); queuePos = 0; buildQueue(); }
-
-  async function loadBundledOrSavedLesson() {
-    if (state.lastLessonId && state.lessonTexts?.[state.lastLessonId]) {
-      const saved = state.lessonTexts[state.lastLessonId]; loadLesson(parseLesson(saved.text, saved.filename || `${state.lastLessonId}.txt`)); return;
-    }
-    try {
-      const r = await fetch('lesson1.txt', { cache: 'no-cache' });
-      if (r.ok) { const text = await r.text(); loadLesson(parseLesson(text, 'lesson1.txt')); }
-    } catch {}
-  }
-
+  // ---------- Settings / events ----------
   function applySettingsToUI() {
     els.repetitionCount.value = state.settings.repetitions;
     els.pauseSeconds.value = state.settings.pauseSeconds;
+    els.recallSeconds.value = state.settings.recallSeconds;
+    els.businessSeconds.value = state.settings.businessSeconds;
     els.beepEnabled.checked = state.settings.beep;
     els.shuffleEnabled.checked = state.settings.shuffle;
     els.hardOnly.checked = state.settings.hardOnly;
     els.wakeLockEnabled.checked = state.settings.wakeLock;
     els.speechRate.value = state.settings.speechRate;
     els.speechRateValue.value = `${Number(state.settings.speechRate).toFixed(2)}×`;
-    loadVoices();
+    els.syncKeyInput.value = state.syncKey || '';
+    loadVoices(); updateUI();
   }
 
   function bindSetting(el, key, transform = x => x) {
-    el.addEventListener('change', () => { state.settings[key] = transform(el.type === 'checkbox' ? el.checked : el.value); saveState(); if (['shuffle', 'hardOnly'].includes(key)) buildQueue(); });
+    el.addEventListener('change', () => {
+      state.settings[key] = transform(el.type === 'checkbox' ? el.checked : el.value); saveState();
+      if (['shuffle', 'hardOnly'].includes(key)) buildQueue({ resetPosition: true });
+    });
   }
 
+  els.modeButtons.forEach(btn => btn.addEventListener('click', () => {
+    if (state.settings.mode === btn.dataset.mode) return;
+    stopTraining(); state.settings.mode = btn.dataset.mode; saveState(); buildQueue({ resetPosition: true });
+  }));
+  els.lessonSelect.addEventListener('change', () => loadLessonById(els.lessonSelect.value).catch(e => alert(e.message)));
+  els.refreshLessonsBtn.addEventListener('click', async () => {
+    const ok = await loadManifest();
+    const id = state.lastLessonId && (manifest.lessons || []).some(x => x.id === state.lastLessonId) ? state.lastLessonId : manifest.lessons?.[0]?.id;
+    if (id) await loadLessonById(id);
+    els.syncInfo.textContent = ok ? 'Lessons refreshed from the server.' : 'Server lesson list unavailable. Using cached/local lessons.';
+  });
   els.lessonFile.addEventListener('change', async () => { const f = els.lessonFile.files?.[0]; if (f) await importLessonFile(f); els.lessonFile.value = ''; });
-  els.progressFile.addEventListener('change', async () => { const f = els.progressFile.files?.[0]; if (f) { try { await importProgressFile(f); alert('Progress imported.'); } catch(e) { alert(`Could not import progress: ${e.message}`); } } els.progressFile.value = ''; });
-  els.playBtn.addEventListener('click', startTraining); els.repeatBtn.addEventListener('click', repeatCurrent); els.nextBtn.addEventListener('click', nextSentence); els.prevBtn.addEventListener('click', prevSentence);
-  els.rideScreenBtn?.addEventListener('click', enterRideScreen); els.rideOverlay?.addEventListener('click', exitRideScreen);
+  els.progressFile.addEventListener('change', async () => {
+    const f = els.progressFile.files?.[0]; if (f) { try { await importProgressFile(f); alert('Progress imported.'); } catch(e) { alert(`Could not import progress: ${e.message}`); } }
+    els.progressFile.value = '';
+  });
+
+  els.playBtn.addEventListener('click', startTraining); els.repeatBtn.addEventListener('click', repeatCurrent); els.nextBtn.addEventListener('click', nextExercise); els.prevBtn.addEventListener('click', prevExercise);
+  els.rideScreenBtn.addEventListener('click', enterRideScreen); els.rideOverlay.addEventListener('click', exitRideScreen);
   els.easyBtn.addEventListener('click', () => rateCurrent('easy')); els.hardBtn.addEventListener('click', () => rateCurrent('hard'));
   els.exportProgressBtn.addEventListener('click', exportProgress); els.resetProgressBtn.addEventListener('click', resetProgress);
   els.testVoiceBtn.addEventListener('click', () => speak('Before we set a target, we need to establish a baseline.').catch(() => {}));
   els.voiceSelect.addEventListener('change', () => { state.settings.voiceURI = els.voiceSelect.value; saveState(); showVoiceInfo(); });
   els.speechRate.addEventListener('input', () => { state.settings.speechRate = Number(els.speechRate.value); els.speechRateValue.value = `${state.settings.speechRate.toFixed(2)}×`; saveState(); });
-  bindSetting(els.repetitionCount, 'repetitions', Number); bindSetting(els.pauseSeconds, 'pauseSeconds', Number); bindSetting(els.beepEnabled, 'beep', Boolean); bindSetting(els.shuffleEnabled, 'shuffle', Boolean); bindSetting(els.hardOnly, 'hardOnly', Boolean); bindSetting(els.wakeLockEnabled, 'wakeLock', Boolean);
+
+  bindSetting(els.repetitionCount, 'repetitions', Number);
+  bindSetting(els.pauseSeconds, 'pauseSeconds', Number);
+  bindSetting(els.recallSeconds, 'recallSeconds', Number);
+  bindSetting(els.businessSeconds, 'businessSeconds', Number);
+  bindSetting(els.beepEnabled, 'beep', Boolean);
+  bindSetting(els.shuffleEnabled, 'shuffle', Boolean);
+  bindSetting(els.hardOnly, 'hardOnly', Boolean);
+  bindSetting(els.wakeLockEnabled, 'wakeLock', Boolean);
+
+  els.generateSyncKeyBtn.addEventListener('click', () => { els.syncKeyInput.type = 'text'; els.syncKeyInput.value = generateSyncKey(); });
+  els.copySyncKeyBtn.addEventListener('click', async () => { const value = els.syncKeyInput.value.trim() || state.syncKey; if (value) await navigator.clipboard?.writeText(value); });
+  els.saveSyncKeyBtn.addEventListener('click', async () => {
+    state.syncKey = els.syncKeyInput.value.trim(); saveState(); els.syncKeyInput.type = 'password'; updateSyncStatus();
+    if (lesson) { await syncCurrentLessonOnOpen(); buildQueue({ resetPosition: true }); }
+  });
 
   if ('speechSynthesis' in window) { window.speechSynthesis.onvoiceschanged = loadVoices; setTimeout(loadVoices, 250); setTimeout(loadVoices, 1200); }
-
   if ('mediaSession' in navigator) {
     try {
       navigator.mediaSession.setActionHandler('play', () => { if (!running || paused) startTraining(); });
       navigator.mediaSession.setActionHandler('pause', () => { if (running && !paused) startTraining(); });
-      navigator.mediaSession.setActionHandler('previoustrack', prevSentence);
-      navigator.mediaSession.setActionHandler('nexttrack', nextSentence);
+      navigator.mediaSession.setActionHandler('previoustrack', prevExercise);
+      navigator.mediaSession.setActionHandler('nexttrack', nextExercise);
     } catch {}
   }
 
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; els.installBtn.hidden = false; });
   els.installBtn.addEventListener('click', async () => { if (!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); await deferredInstallPrompt.userChoice; deferredInstallPrompt = null; els.installBtn.hidden = true; });
-
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 
-  applySettingsToUI(); loadBundledOrSavedLesson(); updateUI(); setPlayIcon();
+  async function init() {
+    applySettingsToUI();
+    await loadServerConfig();
+    await loadManifest();
+    updateSyncStatus();
+    const id = state.lastLessonId && (manifest.lessons || []).some(x => x.id === state.lastLessonId) ? state.lastLessonId : manifest.lessons?.[0]?.id;
+    if (id) {
+      try { await loadLessonById(id); } catch (e) { els.sentenceText.textContent = e.message; }
+    } else {
+      els.sentenceText.textContent = 'No lesson is available. Upload lessons/index.json and a lesson file, or import a local lesson.';
+    }
+    setPlayIcon();
+  }
+
+  init();
 })();

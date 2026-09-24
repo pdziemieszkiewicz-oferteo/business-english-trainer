@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="Hands-free Business English listen-and-repeat trainer." />
+  <meta name="description" content="Hands-free Business English trainer with Repeat, Active Recall and Business Response modes." />
   <title>CEO English Ride Trainer</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
@@ -17,22 +17,25 @@
         <p class="eyebrow">Business English</p>
         <h1>Ride Trainer</h1>
       </div>
-      <button id="installBtn" class="ghost" hidden>Install</button>
+      <div class="top-actions">
+        <span id="syncBadge" class="sync-badge" title="Server sync status">Local</span>
+        <button id="installBtn" class="ghost" hidden>Install</button>
+      </div>
     </header>
 
     <section class="card lesson-card">
       <div class="lesson-row">
-        <div>
+        <div class="lesson-picker-wrap">
           <span class="label">Lesson</span>
-          <strong id="lessonName">No lesson loaded</strong>
-          <span id="lessonMeta" class="muted"></span>
+          <select id="lessonSelect" class="lesson-select" aria-label="Lesson"></select>
+          <span id="lessonMeta" class="muted small"></span>
         </div>
-        <label class="file-button">
-          Import lesson
-          <input id="lessonFile" type="file" accept=".txt,text/plain" hidden />
-        </label>
+        <div class="mode-tabs" role="group" aria-label="Training mode">
+          <button class="mode-btn active" data-mode="R" title="Repeat">R</button>
+          <button class="mode-btn" data-mode="A" title="Active Recall">A</button>
+          <button class="mode-btn" data-mode="B" title="Business Response">B</button>
+        </div>
       </div>
-      <p class="small">TXT format: one sentence per line. The filename becomes the lesson ID.</p>
     </section>
 
     <section class="card status-card">
@@ -41,7 +44,9 @@
         <span id="phaseLabel">Ready</span>
       </div>
       <div class="progress"><div id="progressBar"></div></div>
-      <p id="sentenceText" class="sentence">Import a lesson or use the bundled lesson1.txt.</p>
+      <div id="modeName" class="mode-name">Repeat</div>
+      <p id="sentenceText" class="sentence">Loading lesson…</p>
+      <p id="translationText" class="translation"></p>
       <div class="timer-wrap">
         <div id="timer" class="timer">—</div>
         <div id="timerHint" class="timer-hint">Press Start before your ride</div>
@@ -49,10 +54,10 @@
     </section>
 
     <section class="controls primary-controls" aria-label="Playback controls">
-      <button id="prevBtn" aria-label="Previous sentence">⏮</button>
+      <button id="prevBtn" aria-label="Previous exercise">⏮</button>
       <button id="playBtn" class="play" aria-label="Start or pause">▶</button>
-      <button id="repeatBtn" aria-label="Repeat sentence">↻</button>
-      <button id="nextBtn" aria-label="Next sentence">⏭</button>
+      <button id="repeatBtn" aria-label="Repeat exercise">↻</button>
+      <button id="nextBtn" aria-label="Next exercise">⏭</button>
     </section>
 
     <section class="controls rating-controls">
@@ -61,7 +66,7 @@
       <button id="rideScreenBtn" class="secondary">Ride screen</button>
     </section>
 
-    <details class="card settings" open>
+    <details class="card settings">
       <summary>Training settings</summary>
 
       <label>
@@ -82,7 +87,7 @@
       </label>
 
       <label>
-        Repetitions
+        Repeat-mode repetitions
         <select id="repetitionCount">
           <option value="1">1</option>
           <option value="2" selected>2</option>
@@ -101,14 +106,56 @@
         </select>
       </label>
 
-      <label class="check"><input id="beepEnabled" type="checkbox" checked /> Beep between repetition windows</label>
-      <label class="check"><input id="shuffleEnabled" type="checkbox" /> Shuffle order</label>
-      <label class="check"><input id="hardOnly" type="checkbox" /> Difficult sentences only</label>
+      <label>
+        Active Recall answer time
+        <select id="recallSeconds">
+          <option value="5">5 s</option>
+          <option value="7" selected>7 s</option>
+          <option value="10">10 s</option>
+          <option value="12">12 s</option>
+        </select>
+      </label>
+
+      <label>
+        Business Response answer time
+        <select id="businessSeconds">
+          <option value="10">10 s</option>
+          <option value="15" selected>15 s</option>
+          <option value="20">20 s</option>
+          <option value="25">25 s</option>
+        </select>
+      </label>
+
+      <label class="check"><input id="beepEnabled" type="checkbox" checked /> Beep between speaking windows</label>
+      <label class="check"><input id="shuffleEnabled" type="checkbox" /> Shuffle exercises with the same repetition count</label>
+      <label class="check"><input id="hardOnly" type="checkbox" /> Difficult exercises only</label>
       <label class="check"><input id="wakeLockEnabled" type="checkbox" checked /> Keep screen awake during training</label>
     </details>
 
     <details class="card settings">
-      <summary>Progress & data</summary>
+      <summary>Lessons & server sync</summary>
+
+      <p class="small muted">Lessons are loaded from <code>lessons/index.json</code> on the server. Local import is kept only as a fallback.</p>
+
+      <div class="button-grid">
+        <button id="refreshLessonsBtn" class="secondary">Refresh lessons from server</button>
+        <label class="file-button secondary-like">
+          Import local lesson
+          <input id="lessonFile" type="file" accept=".txt,text/plain" hidden />
+        </label>
+      </div>
+
+      <label>
+        Sync key
+        <input id="syncKeyInput" class="text-input" type="password" autocomplete="off" placeholder="Use the same key on every device" />
+      </label>
+      <div class="row compact wrap">
+        <button id="generateSyncKeyBtn" class="secondary">Generate key</button>
+        <button id="saveSyncKeyBtn" class="secondary">Save key & sync</button>
+        <button id="copySyncKeyBtn" class="secondary">Copy key</button>
+      </div>
+      <p id="syncInfo" class="small muted">Server progress sync is not configured yet.</p>
+
       <div class="button-grid">
         <button id="exportProgressBtn" class="secondary">Export progress JSON</button>
         <label class="file-button secondary-like">
@@ -121,12 +168,13 @@
     </details>
 
     <section class="card help">
-      <h2>Ride mode</h2>
-      <p>The app speaks one sentence, waits for your repetitions, optionally beeps between repetition windows, and moves to the next sentence automatically.</p>
-      <p><strong>Manual navigation:</strong> Repeat, Previous and Next immediately start continuous playback. The manually selected sentence gets 2 extra seconds in each repetition window.</p>
-      <p><strong>Headset controls:</strong> Play/Pause, Previous and Next are registered through the browser Media Session API when supported. Browser/headset support varies.</p>
-      <p><strong>Screen lock:</strong> browser TTS may be suspended by Android when the phone is actually locked. For the most reliable ride session, keep <em>Keep screen awake</em> enabled and use <strong>Ride screen</strong>, which keeps the page active with an almost-black display.</p>
-      <p><strong>Offline:</strong> the PWA shell and imported lesson are stored locally. TTS can work offline when the selected English voice is installed on your phone.</p>
+      <h2>Modes</h2>
+      <p><strong>R — Repeat:</strong> hear the English sentence, then repeat it during the silent windows.</p>
+      <p><strong>A — Active Recall:</strong> hear a cue, answer from memory, then hear the target answer and repeat it.</p>
+      <p><strong>B — Business Response:</strong> hear a business question, answer freely, then hear a model answer and repeat it.</p>
+      <p><strong>Polish translations</strong> are displayed below the English text but are never spoken.</p>
+      <p><strong>Smart start:</strong> when a lesson opens, exercises with the lowest number of completed practices are placed first. Server progress is used when sync is configured.</p>
+      <p><strong>Manual navigation:</strong> Repeat, Previous and Next immediately start continuous playback. The manually selected exercise gets 2 extra seconds in each answer/repetition window.</p>
     </section>
   </main>
 
