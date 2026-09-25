@@ -553,7 +553,7 @@
       const rs = state.settings.hardOnly ? null : roundState();
       navigator.mediaSession.metadata = new MediaMetadata({
         title: `${lesson.title || lesson.id} · ${MODE_NAMES[state.settings.mode] || state.settings.mode}`,
-        artist: 'CEO English Ride Trainer v6.1',
+        artist: 'CEO English Ride Trainer v6.2',
         album: state.settings.hardOnly ? `${queuePos + 1}/${queue.length} · Difficult only` : `${queuePos + 1}/${queue.length} · Round ${rs?.round || 1}`
       });
     } catch {}
@@ -923,7 +923,14 @@
 
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; els.installBtn.hidden = false; });
   els.installBtn.addEventListener('click', async () => { if (!deferredInstallPrompt) return; deferredInstallPrompt.prompt(); await deferredInstallPrompt.userChoice; deferredInstallPrompt = null; els.installBtn.hidden = true; });
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
+      await registration.update();
+    } catch (_) {}
+  });
+}
   window.addEventListener('pagehide', () => { if (lesson && syncConfigured()) pushRemoteProgress(lesson.id); });
 
   async function init() {

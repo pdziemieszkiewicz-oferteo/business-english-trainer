@@ -1,27 +1,67 @@
-const CACHE = 'ride-trainer-v6-1-shell-1';
+const CACHE = 'ride-trainer-v6-2-shell-1';
+
 const SHELL = [
-  './', './index.html', './app.js', './styles.css', './manifest.webmanifest',
-  './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
-  './lessons/index.json', './lessons/lesson3.txt'
+  './',
+  './index.html',
+  './app.js',
+  './styles.css',
+  './manifest.webmanifest',
+  './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './lessons/index.json',
+  './lessons/lesson3.txt',
+  './server-config.json'
 ];
+
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => cache.addAll(SHELL))
+      .then(() => self.skipWaiting())
+  );
 });
+
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  event.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))
+      .then(() => self.clients.claim())
+  );
 });
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return;
-  // Lesson and config files: network first so edits on GitHub are visible quickly, cache fallback for offline use.
-  if (url.pathname.includes('/lessons/') || url.pathname.endsWith('/server-config.json')) {
-    event.respondWith(fetch(event.request).then(r => {
-      const copy = r.clone(); caches.open(CACHE).then(c => c.put(event.request, copy)); return r;
-    }).catch(() => caches.match(event.request)));
-    return;
+
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE);
+
+  try {
+    // Force a real network check so a normal F5 sees the newest GitHub Pages files.
+    const response = await fetch(request, { cache: 'no-store' });
+
+    if (response && response.ok) {
+      cache.put(request, response.clone()).catch(() => {});
+    }
+
+    return response;
+  } catch (_) {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+
+    // For navigation requests, fall back to the cached app shell.
+    if (request.mode === 'navigate') {
+      const shell = await cache.match('./index.html');
+      if (shell) return shell;
+    }
+
+    throw _;
   }
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).then(r => {
-    const copy = r.clone(); caches.open(CACHE).then(c => c.put(event.request, copy)); return r;
-  })));
+}
+
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  event.respondWith(networkFirst(request));
 });
