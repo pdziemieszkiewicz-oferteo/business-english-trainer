@@ -11,17 +11,17 @@
     easyBtn: $('easyBtn'), hardBtn: $('hardBtn'), rideScreenBtn: $('rideScreenBtn'),
     voiceSelect: $('voiceSelect'), testVoiceBtn: $('testVoiceBtn'), voiceInfo: $('voiceInfo'),
     speechRate: $('speechRate'), speechRateValue: $('speechRateValue'),
-    repetitionCount: $('repetitionCount'), pauseSeconds: $('pauseSeconds'), recallSeconds: $('recallSeconds'), businessSeconds: $('businessSeconds'),
-    beepEnabled: $('beepEnabled'), shuffleEnabled: $('shuffleEnabled'), hardOnly: $('hardOnly'), wakeLockEnabled: $('wakeLockEnabled'),
+    repetitionCount: $('repetitionCount'), pauseSeconds: $('pauseSeconds'), recallSeconds: $('recallSeconds'), businessSeconds: $('businessSeconds'), endWarningSeconds: $('endWarningSeconds'),
+    beepEnabled: $('beepEnabled'), shuffleEnabled: $('shuffleEnabled'), hardOnly: $('hardOnly'), wakeLockEnabled: $('wakeLockEnabled'), mediaControlsEnabled: $('mediaControlsEnabled'),
     refreshLessonsBtn: $('refreshLessonsBtn'), syncKeyInput: $('syncKeyInput'), generateSyncKeyBtn: $('generateSyncKeyBtn'),
     saveSyncKeyBtn: $('saveSyncKeyBtn'), copySyncKeyBtn: $('copySyncKeyBtn'), syncInfo: $('syncInfo'), syncBadge: $('syncBadge'),
     exportProgressBtn: $('exportProgressBtn'), progressFile: $('progressFile'), resetProgressBtn: $('resetProgressBtn'), stats: $('stats'),
     installBtn: $('installBtn'), rideOverlay: $('rideOverlay'), rideOverlayStatus: $('rideOverlayStatus')
   };
 
-  const STORE_KEY = 'ceoEnglishRideTrainerV5';
-  const LEGACY_STORE_KEY = 'ceoEnglishRideTrainerV4';
-  const APP_VERSION = '5.0';
+  const STORE_KEY = 'ceoEnglishRideTrainerV6';
+  const LEGACY_STORE_KEY = 'ceoEnglishRideTrainerV5';
+  const APP_VERSION = '6.0';
   const MANUAL_REPLAY_BONUS_SECONDS = 2;
   const MODE_NAMES = { R: 'Repeat', A: 'Active Recall', B: 'Business Response' };
 
@@ -38,6 +38,8 @@
   let wakeLock = null;
   let deferredInstallPrompt = null;
   let audioCtx = null;
+  let controlAudio = null;
+  let controlAudioUrl = null;
   let voices = [];
   let syncTimer = null;
   let syncBusy = false;
@@ -45,8 +47,8 @@
   function defaultState() {
     return {
       settings: {
-        mode: 'R', repetitions: 2, pauseSeconds: 7, recallSeconds: 7, businessSeconds: 15,
-        beep: true, shuffle: false, hardOnly: false, wakeLock: true, speechRate: 0.9, voiceURI: ''
+        mode: 'R', repetitions: 2, pauseSeconds: 7, recallSeconds: 7, businessSeconds: 15, endWarningSeconds: 2,
+        beep: true, shuffle: false, hardOnly: false, wakeLock: true, mediaControls: true, speechRate: 0.9, voiceURI: ''
       },
       lessons: {},
       lastLessonId: null,
@@ -280,6 +282,7 @@
       els.translationText.textContent = '';
     }
     updateStats();
+    updateMediaMetadata();
   }
 
   function updateStats() {
@@ -343,10 +346,11 @@
     });
   }
 
-  function sleep(ms, token, hint = '') {
+  function sleep(ms, token, hint = '', warningBeforeMs = 0) {
     return new Promise(resolve => {
       let remaining = ms;
       let lastTick = Date.now();
+      let warningPlayed = false;
       els.timerHint.textContent = hint || '';
       function tick() {
         if (token !== currentAbort || !running) return resolve('aborted');
@@ -355,11 +359,24 @@
         lastTick = now;
         const left = Math.max(0, remaining);
         els.timer.textContent = Math.ceil(left / 1000);
+        if (!paused && !warningPlayed && warningBeforeMs > 0 && left > 0 && left <= warningBeforeMs) {
+          warningPlayed = true;
+          warningBeep();
+        }
         if (left <= 0) { els.timer.textContent = '—'; resolve('done'); }
-        else countdownTimer = setTimeout(tick, 180);
+        else countdownTimer = setTimeout(tick, 120);
       }
       tick();
     });
+  }
+
+  function warningBeep() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.frequency.value = 620; g.gain.value = 0.018; o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + 0.075);
+    } catch {}
   }
 
   function beep() {
@@ -405,7 +422,9 @@
     const seconds = Number(state.settings.pauseSeconds || 7) + bonus;
     for (let i = 1; i <= reps; i++) {
       setPhase(`Repeat ${i}/${reps}`, 'Repeat the English answer aloud');
-      const result = await sleep(seconds * 1000, token, 'Repeat the English answer aloud');
+      const warningSeconds = i === reps ? Number(state.settings.endWarningSeconds || 0) : 0;
+      const warningMs = Math.max(0, Math.min(warningSeconds * 1000, Math.max(0, seconds * 1000 - 500)));
+      const result = await sleep(seconds * 1000, token, 'Repeat the English answer aloud', warningMs);
       if (result === 'aborted') return false;
       if (i < reps) beep();
     }
@@ -487,27 +506,81 @@
     setTimeout(() => { if (running && !paused) runCurrentExercise(); }, 280);
   }
 
+  function makeSilentWavUrl(seconds = 8, sampleRate = 8000) {
+    const samples = Math.max(1, Math.floor(seconds * sampleRate));
+    const bytes = 44 + samples * 2;
+    const buffer = new ArrayBuffer(bytes);
+    const view = new DataView(buffer);
+    const write = (offset, text) => { for (let i = 0; i < text.length; i++) view.setUint8(offset + i, text.charCodeAt(i)); };
+    write(0, 'RIFF'); view.setUint32(4, 36 + samples * 2, true); write(8, 'WAVE');
+    write(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+    write(36, 'data'); view.setUint32(40, samples * 2, true);
+    return URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' }));
+  }
+
+  function ensureControlAudio() {
+    if (controlAudio) return controlAudio;
+    controlAudioUrl = makeSilentWavUrl(8);
+    controlAudio = new Audio(controlAudioUrl);
+    controlAudio.loop = true;
+    controlAudio.preload = 'auto';
+    controlAudio.volume = 0.01;
+    return controlAudio;
+  }
+
+  async function startMediaCarrier() {
+    if (!state.settings.mediaControls) return;
+    const a = ensureControlAudio();
+    try { await a.play(); } catch {}
+    updateMediaMetadata();
+    try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing'; } catch {}
+  }
+
+  function pauseMediaCarrier() {
+    try { controlAudio?.pause(); } catch {}
+    try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; } catch {}
+  }
+
+  function stopMediaCarrier() {
+    try { if (controlAudio) { controlAudio.pause(); controlAudio.currentTime = 0; } } catch {}
+    try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none'; } catch {}
+  }
+
+  function updateMediaMetadata() {
+    if (!('mediaSession' in navigator) || !lesson) return;
+    try {
+      const rs = state.settings.hardOnly ? null : roundState();
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: `${lesson.title || lesson.id} · ${MODE_NAMES[state.settings.mode] || state.settings.mode}`,
+        artist: 'CEO English Ride Trainer v6.1',
+        album: state.settings.hardOnly ? `${queuePos + 1}/${queue.length} · Difficult only` : `${queuePos + 1}/${queue.length} · Round ${rs?.round || 1}`
+      });
+    } catch {}
+  }
+
   async function startTraining() {
     if (!lesson || !queue.length) return;
     if (!running) {
       running = true; paused = false;
+      startMediaCarrier();
       const p = getProgress(); p.sessions = (p.sessions || 0) + 1; touchProgress(); saveState(); scheduleServerPush();
       if (state.settings.wakeLock) await requestWakeLock();
       setPlayIcon(); runCurrentExercise();
     } else if (paused) {
-      paused = false; if (window.speechSynthesis?.paused) window.speechSynthesis.resume(); setPhase('Resumed'); setPlayIcon();
+      paused = false; startMediaCarrier(); if (window.speechSynthesis?.paused) window.speechSynthesis.resume(); setPhase('Resumed'); setPlayIcon();
     } else {
-      paused = true; if (window.speechSynthesis?.speaking) window.speechSynthesis.pause(); setPhase('Paused', 'Press Play to continue'); setPlayIcon();
+      paused = true; pauseMediaCarrier(); if (window.speechSynthesis?.speaking) window.speechSynthesis.pause(); setPhase('Paused', 'Press Play to continue'); setPlayIcon();
     }
   }
 
   function stopTraining(hint = '') {
-    running = false; paused = false; ++currentAbort; clearTimeout(countdownTimer); window.speechSynthesis?.cancel(); releaseWakeLock(); setPlayIcon();
+    running = false; paused = false; ++currentAbort; clearTimeout(countdownTimer); window.speechSynthesis?.cancel(); stopMediaCarrier(); releaseWakeLock(); setPlayIcon();
     els.timerHint.textContent = hint || '';
   }
 
   async function startManualPlaybackAtCurrent() {
-    stopTraining(); running = true; paused = false;
+    stopTraining(); running = true; paused = false; startMediaCarrier();
     if (state.settings.wakeLock) await requestWakeLock();
     setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
@@ -518,7 +591,7 @@
     queuePos = Math.min(queue.length - 1, queuePos + 1);
     saveRoundPosition();
     updateUI();
-    running = true; paused = false; if (state.settings.wakeLock) await requestWakeLock(); setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
+    running = true; paused = false; startMediaCarrier(); if (state.settings.wakeLock) await requestWakeLock(); setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
   async function prevExercise() {
     if (!queue.length) return;
@@ -526,7 +599,7 @@
     queuePos = Math.max(0, queuePos - 1);
     saveRoundPosition();
     updateUI();
-    running = true; paused = false; if (state.settings.wakeLock) await requestWakeLock(); setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
+    running = true; paused = false; startMediaCarrier(); if (state.settings.wakeLock) await requestWakeLock(); setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
 
   function rateCurrent(kind) {
@@ -773,10 +846,12 @@
     els.pauseSeconds.value = state.settings.pauseSeconds;
     els.recallSeconds.value = state.settings.recallSeconds;
     els.businessSeconds.value = state.settings.businessSeconds;
+    els.endWarningSeconds.value = state.settings.endWarningSeconds;
     els.beepEnabled.checked = state.settings.beep;
     els.shuffleEnabled.checked = state.settings.shuffle;
     els.hardOnly.checked = state.settings.hardOnly;
     els.wakeLockEnabled.checked = state.settings.wakeLock;
+    els.mediaControlsEnabled.checked = state.settings.mediaControls;
     els.speechRate.value = state.settings.speechRate;
     els.speechRateValue.value = `${Number(state.settings.speechRate).toFixed(2)}×`;
     els.syncKeyInput.value = state.syncKey || '';
@@ -819,10 +894,12 @@
   bindSetting(els.pauseSeconds, 'pauseSeconds', Number);
   bindSetting(els.recallSeconds, 'recallSeconds', Number);
   bindSetting(els.businessSeconds, 'businessSeconds', Number);
+  bindSetting(els.endWarningSeconds, 'endWarningSeconds', Number);
   bindSetting(els.beepEnabled, 'beep', Boolean);
   bindSetting(els.shuffleEnabled, 'shuffle', Boolean);
   bindSetting(els.hardOnly, 'hardOnly', Boolean);
   bindSetting(els.wakeLockEnabled, 'wakeLock', Boolean);
+  bindSetting(els.mediaControlsEnabled, 'mediaControls', Boolean);
 
   els.generateSyncKeyBtn.addEventListener('click', () => { els.syncKeyInput.type = 'text'; els.syncKeyInput.value = generateSyncKey(); });
   els.copySyncKeyBtn.addEventListener('click', async () => { const value = els.syncKeyInput.value.trim() || state.syncKey; if (value) await navigator.clipboard?.writeText(value); });
@@ -836,8 +913,11 @@
     try {
       navigator.mediaSession.setActionHandler('play', () => { if (!running || paused) startTraining(); });
       navigator.mediaSession.setActionHandler('pause', () => { if (running && !paused) startTraining(); });
+      navigator.mediaSession.setActionHandler('stop', () => stopTraining('Stopped from headset/media controls'));
       navigator.mediaSession.setActionHandler('previoustrack', prevExercise);
       navigator.mediaSession.setActionHandler('nexttrack', nextExercise);
+      try { navigator.mediaSession.setActionHandler('seekbackward', prevExercise); } catch {}
+      try { navigator.mediaSession.setActionHandler('seekforward', nextExercise); } catch {}
     } catch {}
   }
 
