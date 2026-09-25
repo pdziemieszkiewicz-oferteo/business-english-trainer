@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f172a" />
   <meta name="description" content="Hands-free Business English trainer with Repeat, Active Recall and Business Response modes." />
-  <title>CEO English Ride Trainer v6.2</title>
+  <title>CEO English Ride Trainer v6.3</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
@@ -15,7 +15,7 @@
     <header class="topbar">
       <div>
         <p class="eyebrow">Business English</p>
-        <h1>Ride Trainer <span class="app-version">v6.2</span></h1>
+        <h1>Ride Trainer <span class="app-version">v6.3</span></h1>
       </div>
       <div class="top-actions">
         <span id="syncBadge" class="sync-badge" title="Server sync status">Progress: local</span>
@@ -181,8 +181,8 @@
       <div id="stats" class="stats"></div>
     </details>
 
-    <section class="card help">
-      <h2>Modes</h2>
+    <details class="card help">
+      <summary>Modes</summary>
       <p><strong>R — Repeat:</strong> hear the English sentence, then repeat it during the silent windows.</p>
       <p><strong>A — Active Recall:</strong> hear a cue, answer from memory, then hear the target answer and repeat it.</p>
       <p><strong>B — Business Response:</strong> hear a business question, answer freely, then hear a model answer and repeat it.</p>
@@ -190,10 +190,10 @@
       <p><strong>Rounds:</strong> each mode keeps its own round and exact position. Closing or refreshing the app resumes the same place. A new round prioritizes the least-practised exercises.</p>
       <p><strong>Manual navigation:</strong> Repeat, Previous and Next immediately start continuous playback. The manually selected exercise gets 2 extra seconds in each answer/repetition window.</p>
       <p><strong>Headset controls:</strong> when supported by Android/browser, Play/Pause, Previous and Next media commands control the trainer. The app also plays a silent media carrier while training to improve headset routing and Android audio-focus behavior.</p>
-          <p><strong>Easy / Hard:</strong> mark your subjective difficulty. They do not increase the repetition counter; the Hard-only setting uses these ratings.</p>
+      <p><strong>Easy / Hard:</strong> mark your subjective difficulty. They do not increase the repetition counter; the Hard-only setting uses these ratings.</p>
       <p><strong>Progress: local:</strong> your statistics are stored only in this browser. With server sync configured, the badge changes to a server/sync status.</p>
       <p><strong>Install app:</strong> installs the PWA on the current device. It appears only when the browser offers installation.</p>
-    </section>
+    </details>
   </main>
 
   <div id="rideOverlay" class="ride-overlay" hidden role="button" tabindex="0" aria-label="Exit ride screen">

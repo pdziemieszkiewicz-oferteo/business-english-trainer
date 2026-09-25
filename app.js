@@ -370,23 +370,23 @@
     });
   }
 
-  function warningBeep() {
-    try {
-      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-      o.frequency.value = 620; g.gain.value = 0.018; o.connect(g); g.connect(audioCtx.destination);
-      o.start(); o.stop(audioCtx.currentTime + 0.075);
-    } catch {}
-  }
-
-  function beep() {
-    if (!state.settings.beep) return;
+  function playSignalBeep() {
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
       const o = audioCtx.createOscillator(), g = audioCtx.createGain();
       o.frequency.value = 880; g.gain.value = 0.055; o.connect(g); g.connect(audioCtx.destination);
       o.start(); o.stop(audioCtx.currentTime + 0.11);
     } catch {}
+  }
+
+  function warningBeep() {
+    // Use exactly the same signal as the normal repetition/start beep.
+    playSignalBeep();
+  }
+
+  function beep() {
+    if (!state.settings.beep) return;
+    playSignalBeep();
   }
 
   function markPlayed(ex) {
@@ -553,7 +553,7 @@
       const rs = state.settings.hardOnly ? null : roundState();
       navigator.mediaSession.metadata = new MediaMetadata({
         title: `${lesson.title || lesson.id} · ${MODE_NAMES[state.settings.mode] || state.settings.mode}`,
-        artist: 'CEO English Ride Trainer v6.2',
+        artist: 'CEO English Ride Trainer v6.3',
         album: state.settings.hardOnly ? `${queuePos + 1}/${queue.length} · Difficult only` : `${queuePos + 1}/${queue.length} · Round ${rs?.round || 1}`
       });
     } catch {}

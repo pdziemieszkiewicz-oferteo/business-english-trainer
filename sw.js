@@ -1,4 +1,4 @@
-const CACHE = 'ride-trainer-v6-2-shell-1';
+const CACHE = 'ride-trainer-v6-3-shell-1';
 
 const SHELL = [
   './',
