@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f172a" />
   <meta name="description" content="Hands-free Business English trainer with Repeat, Active Recall, Business Response and Translate & Recall modes." />
-  <title>CEO English Ride Trainer v7.2</title>
+  <title>CEO English Ride Trainer v7.3</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=7.2" />
+  <link rel="stylesheet" href="styles.css?v=7.3" />
 </head>
 <body>
   <main class="app">
     <header class="topbar">
       <div>
         <p class="eyebrow">Business English</p>
-        <h1>Ride Trainer <span class="app-version">v7.2</span></h1>
+        <h1>Ride Trainer <span class="app-version">v7.3</span></h1>
       </div>
       <div class="top-actions">
         <span id="syncBadge" class="sync-badge" title="Server sync status">Progress: local</span>
@@ -46,6 +46,15 @@
       <button id="nextBtn" aria-label="Next exercise">⏭</button>
     </section>
 
+    <section class="rating-section" aria-label="Current sentence rating">
+      <div class="controls rating-controls">
+        <button id="easyBtn" class="secondary" title="Mark this exercise as easy">Easy</button>
+        <button id="hardBtn" class="secondary" title="Mark this exercise as difficult">Hard</button>
+        <button id="rideScreenBtn" class="secondary">Ride screen</button>
+      </div>
+      <p id="ratingStatus" class="rating-status" aria-live="polite">Not rated yet</p>
+    </section>
+
     <section class="card lesson-card compact-card">
       <div class="lesson-row">
         <div class="lesson-picker-wrap">
@@ -60,15 +69,6 @@
           <button class="mode-btn" data-mode="P" title="Translate & Recall: Polish to English">PL</button>
         </div>
       </div>
-    </section>
-
-    <section class="rating-section" aria-label="Current sentence rating">
-      <div class="controls rating-controls">
-        <button id="easyBtn" class="secondary" title="Mark this exercise as easy">Easy</button>
-        <button id="hardBtn" class="secondary" title="Mark this exercise as difficult">Hard</button>
-        <button id="rideScreenBtn" class="secondary">Ride screen</button>
-      </div>
-      <p id="ratingStatus" class="rating-status" aria-live="polite">Not rated yet</p>
     </section>
 
     <details class="card settings">
@@ -137,10 +137,9 @@
       <label>
         Quiet warning before pause ends
         <div class="number-row"><input id="endWarningSeconds" type="number" inputmode="decimal" min="0" step="any" value="2" required /><span class="input-unit">seconds (0 = off)</span></div>
-        <span class="field-hint">R/A/B: final repetition window only. PL: Polish recall pause + EVERY repetition window. The warning tone is independent of the transition-beep checkbox.</span>
+        <span class="field-hint">Sounds once before the end of EVERY silent countdown: recall/response and each repetition window in all modes. No sounds at the start of a countdown or between windows. Set 0 for silence. If the warning offset is too long for a short pause, the sound is skipped.</span>
       </label>
 
-      <label class="check"><input id="beepEnabled" type="checkbox" checked /> Beep between speaking windows</label>
       <label class="check"><input id="shuffleEnabled" type="checkbox" /> Shuffle exercises with the same repetition count</label>
       <label class="check"><input id="hardOnly" type="checkbox" /> Difficult exercises only</label>
       <label class="check"><input id="wakeLockEnabled" type="checkbox" checked /> Keep screen awake during training</label>
@@ -199,12 +198,12 @@
       <div class="table-scroll"><table>
         <thead><tr><th>Setting</th><th>Used in</th><th>Meaning</th></tr></thead>
         <tbody>
-          <tr><td>Repetition windows</td><td>R, A, B, PL</td><td>How many separate silent windows follow the English model spoken ONCE. A beep separates successive windows when transition beeps are on.</td></tr>
+          <tr><td>Repetition windows</td><td>R, A, B, PL</td><td>How many silent repetition windows follow the English model spoken once. No transition beep; each window has its own end warning.</td></tr>
           <tr><td>Pause per repetition</td><td>R, A, B, PL</td><td>Seconds PER silent repetition window, not a combined total.</td></tr>
           <tr><td>Active Recall answer time</td><td>A</td><td>After the English cue, before the English model answer.</td></tr>
           <tr><td>Polish → English recall pause</td><td>PL</td><td>After the Polish voice, before the English voice answers.</td></tr>
           <tr><td>Business Response answer time</td><td>B</td><td>After the English question, before the English model answer.</td></tr>
-          <tr><td>Quiet warning</td><td>R/A/B: final repetition; PL: recall + every repetition</td><td>A warning sound this many seconds BEFORE a specified silent pause ends. Set 0 to disable. It uses the same tone as the normal beep.</td></tr>
+          <tr><td>Quiet warning</td><td>Every silence/countdown in R, A, B and PL</td><td>One warning tone sounds this many seconds before EVERY pause ends. Never a start-of-counter sound. Set 0 for silence; if the requested offset cannot fit in a short pause, no sound is played.</td></tr>
           <tr><td>Speech rate</td><td>All</td><td>How quickly the selected voice reads the cue/model; doesn't change the configured silence durations.</td></tr>
         </tbody>
       </table></div>
@@ -238,6 +237,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=7.2"></script>
+  <script src="app.js?v=7.3"></script>
 </body>
 </html>

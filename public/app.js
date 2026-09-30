@@ -13,7 +13,7 @@
     polishVoiceSelect: $('polishVoiceSelect'), testPolishVoiceBtn: $('testPolishVoiceBtn'), polishVoiceInfo: $('polishVoiceInfo'), translationSeconds: $('translationSeconds'),
     speechRate: $('speechRate'), speechRateValue: $('speechRateValue'),
     repetitionCount: $('repetitionCount'), pauseSeconds: $('pauseSeconds'), recallSeconds: $('recallSeconds'), businessSeconds: $('businessSeconds'), endWarningSeconds: $('endWarningSeconds'),
-    beepEnabled: $('beepEnabled'), shuffleEnabled: $('shuffleEnabled'), hardOnly: $('hardOnly'), wakeLockEnabled: $('wakeLockEnabled'), mediaControlsEnabled: $('mediaControlsEnabled'),
+    shuffleEnabled: $('shuffleEnabled'), hardOnly: $('hardOnly'), wakeLockEnabled: $('wakeLockEnabled'), mediaControlsEnabled: $('mediaControlsEnabled'),
     refreshLessonsBtn: $('refreshLessonsBtn'), syncKeyInput: $('syncKeyInput'), generateSyncKeyBtn: $('generateSyncKeyBtn'),
     saveSyncKeyBtn: $('saveSyncKeyBtn'), copySyncKeyBtn: $('copySyncKeyBtn'), syncInfo: $('syncInfo'), syncBadge: $('syncBadge'),
     exportProgressBtn: $('exportProgressBtn'), progressFile: $('progressFile'), resetProgressBtn: $('resetProgressBtn'), stats: $('stats'),
@@ -25,7 +25,7 @@
 
   const STORE_KEY = 'ceoEnglishRideTrainerV6';
   const LEGACY_STORE_KEY = 'ceoEnglishRideTrainerV5';
-  const APP_VERSION = '7.2';
+  const APP_VERSION = '7.3';
   const MANUAL_REPLAY_BONUS_SECONDS = 2;
   const MODE_NAMES = { R: 'Repeat', A: 'Active Recall', B: 'Business Response', P: 'Translate & Recall (PL → EN)' };
 
@@ -450,9 +450,21 @@
     });
   }
 
+  function primeWarningAudio() {
+    // Called directly from the user's Play/Repeat/Next gesture. On mobile,
+    // Web Audio often needs unlocking BEFORE a timer reaches its warning point.
+    try {
+      const AudioClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioClass) return;
+      audioCtx = audioCtx || new AudioClass();
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+    } catch {}
+  }
+
   function playSignalBeep() {
     try {
-      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      primeWarningAudio();
+      if (!audioCtx) return;
       const o = audioCtx.createOscillator(), g = audioCtx.createGain();
       o.frequency.value = 880; g.gain.value = 0.055; o.connect(g); g.connect(audioCtx.destination);
       o.start(); o.stop(audioCtx.currentTime + 0.11);
@@ -460,13 +472,17 @@
   }
 
   function warningBeep() {
-    // Use exactly the same signal as the normal repetition/start beep.
+    // The only audible training signal is the configurable warning BEFORE a pause ends.
     playSignalBeep();
   }
 
-  function beep() {
-    if (!state.settings.beep) return;
-    playSignalBeep();
+  function warningMsForPause(seconds) {
+    const warningSeconds = Number(state.settings.endWarningSeconds ?? 0);
+    if (!Number.isFinite(seconds) || !Number.isFinite(warningSeconds)) return 0;
+    // A warning at or near the BEGINNING of a counter is worse than no warning.
+    // Skip the sound when the pause is too short to accommodate the requested offset.
+    if (seconds <= 0 || warningSeconds <= 0 || warningSeconds > seconds - 0.25) return 0;
+    return warningSeconds * 1000;
   }
 
   function markPlayed(ex) {
@@ -497,16 +513,14 @@
     return token === currentAbort && running;
   }
 
-  async function repetitionWindows(token, bonus, warnEveryWindow = false) {
+  async function repetitionWindows(token, bonus) {
     const reps = Number(state.settings.repetitions || 2);
     const seconds = Number(state.settings.pauseSeconds ?? 7) + bonus;
     for (let i = 1; i <= reps; i++) {
       setPhase(`Repeat ${i}/${reps}`, 'Repeat the English answer aloud');
-      const warningSeconds = (i === reps || warnEveryWindow) ? Number(state.settings.endWarningSeconds || 0) : 0;
-      const warningMs = Math.max(0, Math.min(warningSeconds * 1000, Math.max(0, seconds * 1000 - 500)));
-      const result = await sleep(seconds * 1000, token, 'Repeat the English answer aloud', warningMs);
+      const result = await sleep(seconds * 1000, token, 'Repeat the English answer aloud', warningMsForPause(seconds));
       if (result === 'aborted') return false;
-      if (i < reps) beep();
+      // No beep at the start of the next repetition counter; the warning is at its end.
     }
     return true;
   }
@@ -522,48 +536,40 @@
       displayExercisePart(ex, 'answer');
       setPhase('Listen', 'Listen to the model sentence');
       if (!(await speakSafely(ex.answerEn, token))) return;
-      beep();
       if (!(await repetitionWindows(token, bonus))) return;
     } else if (ex.mode === 'A') {
       displayExercisePart(ex, 'prompt');
       setPhase('Cue', 'Listen to the cue');
       if (!(await speakSafely(ex.promptEn, token))) return;
-      beep();
       setPhase('Recall', 'Say the target sentence from memory');
-      if ((await sleep((Number(state.settings.recallSeconds ?? 7) + bonus) * 1000, token, 'Say the target sentence from memory')) === 'aborted') return;
+      const recallDuration = Number(state.settings.recallSeconds ?? 7) + bonus;
+      if ((await sleep(recallDuration * 1000, token, 'Say the target sentence from memory', warningMsForPause(recallDuration))) === 'aborted') return;
       displayExercisePart(ex, 'answer');
       setPhase('Model answer', 'Listen and compare');
       if (!(await speakSafely(ex.answerEn, token))) return;
-      beep();
       if (!(await repetitionWindows(token, bonus))) return;
     } else if (ex.mode === 'P') {
       // PL voice first. English is intentionally hidden until the answer is spoken.
       displayExercisePart(ex, 'prompt');
       setPhase('Polish prompt', 'Listen to Polish, then produce the English sentence');
       if (!(await speakSafely(ex.promptPl, token, 'pl'))) return;
-      beep();
       setPhase('Translate', 'Say the English sentence from memory');
       const seconds = Number(state.settings.translationSeconds ?? 5) + bonus;
-      const warn = Number(state.settings.endWarningSeconds || 0);
-      const warnMs = Math.max(0, Math.min(warn * 1000, Math.max(0, seconds * 1000 - 500)));
-      if ((await sleep(seconds * 1000, token, 'Say the English sentence from memory', warnMs)) === 'aborted') return;
+      if ((await sleep(seconds * 1000, token, 'Say the English sentence from memory', warningMsForPause(seconds))) === 'aborted') return;
       displayExercisePart(ex, 'answer');
       setPhase('English answer', 'Listen and compare');
       if (!(await speakSafely(ex.answerEn, token, 'en'))) return;
-      beep();
-      // The same warning tone sounds near the end of each repetition pause.
-      if (!(await repetitionWindows(token, bonus, true))) return;
+      if (!(await repetitionWindows(token, bonus))) return;
     } else {
       displayExercisePart(ex, 'prompt');
       setPhase('Business question', 'Listen, then answer freely');
       if (!(await speakSafely(ex.promptEn, token))) return;
-      beep();
       setPhase('Your answer', 'Answer in your own words');
-      if ((await sleep((Number(state.settings.businessSeconds ?? 15) + bonus) * 1000, token, 'Answer in your own words')) === 'aborted') return;
+      const responseDuration = Number(state.settings.businessSeconds ?? 15) + bonus;
+      if ((await sleep(responseDuration * 1000, token, 'Answer in your own words', warningMsForPause(responseDuration))) === 'aborted') return;
       displayExercisePart(ex, 'answer');
       setPhase('Model answer', 'Listen to one strong answer');
       if (!(await speakSafely(ex.answerEn, token))) return;
-      beep();
       if (!(await repetitionWindows(token, bonus))) return;
     }
 
@@ -650,7 +656,7 @@
       const rs = state.settings.hardOnly ? null : roundState();
       navigator.mediaSession.metadata = new MediaMetadata({
         title: `${lesson.title || lesson.id} · ${MODE_NAMES[state.settings.mode] || state.settings.mode}`,
-        artist: 'CEO English Ride Trainer v7.2',
+        artist: 'CEO English Ride Trainer v7.3',
         album: state.settings.hardOnly ? `${queuePos + 1}/${queue.length} · Difficult only` : `${queuePos + 1}/${queue.length} · Round ${rs?.round || 1}`
       });
     } catch {}
@@ -660,14 +666,15 @@
     if (!lesson || !queue.length) return;
     if (!running) {
       running = true; paused = false;
+      primeWarningAudio();
       startMediaCarrier();
       const p = getProgress(); p.sessions = (p.sessions || 0) + 1; touchProgress(); saveState(); scheduleServerPush();
       if (state.settings.wakeLock) await requestWakeLock();
       setPlayIcon(); runCurrentExercise();
     } else if (paused) {
-      paused = false; startMediaCarrier(); if (window.speechSynthesis?.paused) window.speechSynthesis.resume(); setPhase('Resumed'); setPlayIcon();
+      paused = false; primeWarningAudio(); startMediaCarrier(); if (window.speechSynthesis?.paused) window.speechSynthesis.resume(); setPhase('Resumed'); setPlayIcon();
     } else {
-      paused = true; pauseMediaCarrier(); if (window.speechSynthesis?.speaking) window.speechSynthesis.pause(); setPhase('Paused', 'Press Play to continue'); setPlayIcon();
+      paused = true; pauseMediaCarrier(); if (window.speechSynthesis?.speaking) window.speechSynthesis.pause(); setPhase('Paused'); setPlayIcon();
     }
   }
 
@@ -677,7 +684,7 @@
   }
 
   async function startManualPlaybackAtCurrent() {
-    stopTraining(); running = true; paused = false; startMediaCarrier();
+    stopTraining(); running = true; paused = false; primeWarningAudio(); startMediaCarrier();
     if (state.settings.wakeLock) await requestWakeLock();
     setPlayIcon(); runCurrentExercise({ pauseBonusSeconds: MANUAL_REPLAY_BONUS_SECONDS });
   }
@@ -1183,7 +1190,6 @@
     els.translationSeconds.value = state.settings.translationSeconds;
     els.showEnglishInPL.checked = state.settings.showEnglishInPL !== false;
     els.endWarningSeconds.value = state.settings.endWarningSeconds;
-    els.beepEnabled.checked = state.settings.beep;
     els.shuffleEnabled.checked = state.settings.shuffle;
     els.hardOnly.checked = state.settings.hardOnly;
     els.wakeLockEnabled.checked = state.settings.wakeLock;
@@ -1253,7 +1259,6 @@
   bindSetting(els.showEnglishInPL, 'showEnglishInPL', Boolean);
   els.showEnglishInPL.addEventListener('change', () => { if (lesson) updateUI(); });
   bindSetting(els.endWarningSeconds, 'endWarningSeconds', Number);
-  bindSetting(els.beepEnabled, 'beep', Boolean);
   bindSetting(els.shuffleEnabled, 'shuffle', Boolean);
   bindSetting(els.hardOnly, 'hardOnly', Boolean);
   bindSetting(els.wakeLockEnabled, 'wakeLock', Boolean);
