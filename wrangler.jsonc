@@ -11,8 +11,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "business-english-progress",
-      "database_id": "PASTE_YOUR_D1_DATABASE_ID_HERE"
+      "database_name": "business-english",
+      "database_id": "026e6ee9-23e4-448c-9904-033bc8b818ea"
     }
   ]
 }
