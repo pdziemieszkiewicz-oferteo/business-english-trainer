@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f172a" />
   <meta name="description" content="Hands-free Business English trainer with Repeat, Active Recall, Business Response and Translate & Recall modes." />
-  <title>CEO English Ride Trainer v7.1</title>
+  <title>CEO English Ride Trainer v7.2</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=7.1" />
+  <link rel="stylesheet" href="styles.css?v=7.2" />
 </head>
 <body>
   <main class="app">
     <header class="topbar">
       <div>
         <p class="eyebrow">Business English</p>
-        <h1>Ride Trainer <span class="app-version">v7.1</span></h1>
+        <h1>Ride Trainer <span class="app-version">v7.2</span></h1>
       </div>
       <div class="top-actions">
         <span id="syncBadge" class="sync-badge" title="Server sync status">Progress: local</span>
@@ -62,10 +62,13 @@
       </div>
     </section>
 
-    <section class="controls rating-controls">
-      <button id="easyBtn" class="secondary" title="Mark this exercise as easy">Easy</button>
-      <button id="hardBtn" class="secondary" title="Mark this exercise as difficult">Hard</button>
-      <button id="rideScreenBtn" class="secondary">Ride screen</button>
+    <section class="rating-section" aria-label="Current sentence rating">
+      <div class="controls rating-controls">
+        <button id="easyBtn" class="secondary" title="Mark this exercise as easy">Easy</button>
+        <button id="hardBtn" class="secondary" title="Mark this exercise as difficult">Hard</button>
+        <button id="rideScreenBtn" class="secondary">Ride screen</button>
+      </div>
+      <p id="ratingStatus" class="rating-status" aria-live="polite">Not rated yet</p>
     </section>
 
     <details class="card settings">
@@ -95,76 +98,46 @@
       </label>
       <p class="small muted">Turn off to reveal English only after your recall attempt.</p>
 
+      <p class="small muted">Enter your own numbers. Pauses accept decimals (e.g., 6.5 s); repetitions must be a whole number.</p>
       <label>
         Speech rate
-        <div class="range-row">
-          <input id="speechRate" type="range" min="0.65" max="1.25" step="0.05" value="0.9" />
+        <div class="range-row number-row">
+          <input id="speechRate" type="number" inputmode="decimal" min="0.1" max="10" step="any" value="0.9" required />
           <output id="speechRateValue">0.90×</output>
         </div>
+        <span class="field-hint">0.1–10× (browser speech-synthesis range).</span>
       </label>
 
       <label>
-        Repeat-mode repetitions
-        <select id="repetitionCount">
-          <option value="1">1</option>
-          <option value="2" selected>2</option>
-          <option value="3">3</option>
-        </select>
+        Repetition windows (all modes)
+        <input id="repetitionCount" type="number" inputmode="numeric" min="1" step="1" value="2" required />
+        <span class="field-hint">Silent speaking windows after hearing English ONCE. Also used in A, B and PL.</span>
       </label>
 
       <label>
         Pause per repetition
-        <select id="pauseSeconds">
-          <option value="5">5 s</option>
-          <option value="7" selected>7 s</option>
-          <option value="9">9 s</option>
-          <option value="12">12 s</option>
-          <option value="15">15 s</option>
-        </select>
+        <div class="number-row"><input id="pauseSeconds" type="number" inputmode="decimal" min="0" step="any" value="7" required /><span class="input-unit">seconds</span></div>
       </label>
 
       <label>
         Active Recall answer time
-        <select id="recallSeconds">
-          <option value="5">5 s</option>
-          <option value="7" selected>7 s</option>
-          <option value="10">10 s</option>
-          <option value="12">12 s</option>
-        </select>
+        <div class="number-row"><input id="recallSeconds" type="number" inputmode="decimal" min="0" step="any" value="7" required /><span class="input-unit">seconds</span></div>
       </label>
 
       <label>
         Polish → English recall pause
-        <select id="translationSeconds">
-          <option value="3">3 s</option>
-          <option value="5" selected>5 s</option>
-          <option value="7">7 s</option>
-          <option value="10">10 s</option>
-          <option value="12">12 s</option>
-          <option value="15">15 s</option>
-        </select>
+        <div class="number-row"><input id="translationSeconds" type="number" inputmode="decimal" min="0" step="any" value="5" required /><span class="input-unit">seconds</span></div>
       </label>
 
       <label>
         Business Response answer time
-        <select id="businessSeconds">
-          <option value="10">10 s</option>
-          <option value="15" selected>15 s</option>
-          <option value="20">20 s</option>
-          <option value="25">25 s</option>
-        </select>
+        <div class="number-row"><input id="businessSeconds" type="number" inputmode="decimal" min="0" step="any" value="15" required /><span class="input-unit">seconds</span></div>
       </label>
 
       <label>
-        Quiet warning before next phrase
-        <select id="endWarningSeconds">
-          <option value="0">Off</option>
-          <option value="1">1 s</option>
-          <option value="2" selected>2 s</option>
-          <option value="3">3 s</option>
-          <option value="4">4 s</option>
-          <option value="5">5 s</option>
-        </select>
+        Quiet warning before pause ends
+        <div class="number-row"><input id="endWarningSeconds" type="number" inputmode="decimal" min="0" step="any" value="2" required /><span class="input-unit">seconds (0 = off)</span></div>
+        <span class="field-hint">R/A/B: final repetition window only. PL: Polish recall pause + EVERY repetition window. The warning tone is independent of the transition-beep checkbox.</span>
       </label>
 
       <label class="check"><input id="beepEnabled" type="checkbox" checked /> Beep between speaking windows</label>
@@ -220,6 +193,28 @@
       <div id="stats" class="stats"></div>
     </details>
 
+    <details class="card help timing-guide">
+      <summary>Timing guide · What every setting does</summary>
+      <p>All speech takes as long as your selected voice needs. The numbers below describe SILENT windows, not voice duration. A manual Repeat / Previous / Next action adds 2 seconds to the relevant pauses for that selected exercise.</p>
+      <div class="table-scroll"><table>
+        <thead><tr><th>Setting</th><th>Used in</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Repetition windows</td><td>R, A, B, PL</td><td>How many separate silent windows follow the English model spoken ONCE. A beep separates successive windows when transition beeps are on.</td></tr>
+          <tr><td>Pause per repetition</td><td>R, A, B, PL</td><td>Seconds PER silent repetition window, not a combined total.</td></tr>
+          <tr><td>Active Recall answer time</td><td>A</td><td>After the English cue, before the English model answer.</td></tr>
+          <tr><td>Polish → English recall pause</td><td>PL</td><td>After the Polish voice, before the English voice answers.</td></tr>
+          <tr><td>Business Response answer time</td><td>B</td><td>After the English question, before the English model answer.</td></tr>
+          <tr><td>Quiet warning</td><td>R/A/B: final repetition; PL: recall + every repetition</td><td>A warning sound this many seconds BEFORE a specified silent pause ends. Set 0 to disable. It uses the same tone as the normal beep.</td></tr>
+          <tr><td>Speech rate</td><td>All</td><td>How quickly the selected voice reads the cue/model; doesn't change the configured silence durations.</td></tr>
+        </tbody>
+      </table></div>
+      <p><strong>R:</strong> English sentence → repeat window 1 → ... → repeat window N → next sentence.</p>
+      <p><strong>A:</strong> English cue → Active Recall answer time → English answer ONCE → N repetition windows.</p>
+      <p><strong>B:</strong> English question → Business Response answer time → English model ONCE → N repetition windows.</p>
+      <p><strong>PL:</strong> Polish sentence → Polish → English recall pause → English answer ONCE → N repetition windows.</p>
+      <p><strong>Example:</strong> N=3, Pause per repetition=6.5s gives three separate 6.5-second windows (19.5s silent practice after the English model). It does NOT speak the model three times. Manual navigation adds 2 seconds to EACH applicable window.</p>
+    </details>
+
     <details class="card help">
       <summary>Modes</summary>
       <p><strong>R — Repeat:</strong> hear the English sentence, then repeat it during the silent windows.</p>
@@ -230,7 +225,7 @@
       <p><strong>Rounds:</strong> each mode keeps its own round and exact position. Closing or refreshing the app resumes the same place. A new round prioritizes the least-practised exercises.</p>
       <p><strong>Manual navigation:</strong> Repeat, Previous and Next immediately start continuous playback. The manually selected exercise gets 2 extra seconds in each answer/repetition window.</p>
       <p><strong>Headset controls:</strong> when supported by Android/browser, Play/Pause, Previous and Next media commands control the trainer. The app also plays a silent media carrier while training to improve headset routing and Android audio-focus behavior.</p>
-      <p><strong>Easy / Hard:</strong> mark your subjective difficulty. They do not increase the repetition counter; the Hard-only setting uses these ratings.</p>
+      <p><strong>Easy / Hard:</strong> marks how difficult the currently displayed sentence felt. The app displays the last rating and its recorded date, highlights the last chosen button, and shows Easy/Hard totals per sentence. Older ratings have no exact date. Ratings do not increase the repetition counter.</p>
       <p><strong>Progress: local:</strong> your statistics are stored only in this browser. With server sync configured, the badge changes to a server/sync status.</p>
       <p><strong>Install app:</strong> installs the PWA on the current device. It appears only when the browser offers installation.</p>
     </details>
@@ -243,6 +238,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=7.1"></script>
+  <script src="app.js?v=7.2"></script>
 </body>
 </html>

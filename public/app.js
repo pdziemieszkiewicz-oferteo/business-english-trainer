@@ -8,7 +8,7 @@
     counter: $('counter'), phaseLabel: $('phaseLabel'), progressBar: $('progressBar'),
     sentenceText: $('sentenceText'), translationText: $('translationText'), timer: $('timer'), timerHint: $('timerHint'),
     prevBtn: $('prevBtn'), playBtn: $('playBtn'), repeatBtn: $('repeatBtn'), nextBtn: $('nextBtn'),
-    easyBtn: $('easyBtn'), hardBtn: $('hardBtn'), rideScreenBtn: $('rideScreenBtn'),
+    easyBtn: $('easyBtn'), hardBtn: $('hardBtn'), ratingStatus: $('ratingStatus'), rideScreenBtn: $('rideScreenBtn'),
     voiceSelect: $('voiceSelect'), testVoiceBtn: $('testVoiceBtn'), voiceInfo: $('voiceInfo'),
     polishVoiceSelect: $('polishVoiceSelect'), testPolishVoiceBtn: $('testPolishVoiceBtn'), polishVoiceInfo: $('polishVoiceInfo'), translationSeconds: $('translationSeconds'),
     speechRate: $('speechRate'), speechRateValue: $('speechRateValue'),
@@ -25,7 +25,7 @@
 
   const STORE_KEY = 'ceoEnglishRideTrainerV6';
   const LEGACY_STORE_KEY = 'ceoEnglishRideTrainerV5';
-  const APP_VERSION = '7.1';
+  const APP_VERSION = '7.2';
   const MANUAL_REPLAY_BONUS_SECONDS = 2;
   const MODE_NAMES = { R: 'Repeat', A: 'Active Recall', B: 'Business Response', P: 'Translate & Recall (PL → EN)' };
 
@@ -126,7 +126,7 @@
   }
 
   function emptyExerciseProgress(ex) {
-    return { id: ex.id, mode: ex.mode, played: 0, easy: 0, hard: 0, score: null, lastPracticedAt: null, lastRating: null };
+    return { id: ex.id, mode: ex.mode, played: 0, easy: 0, hard: 0, score: null, lastPracticedAt: null, lastRating: null, lastRatedAt: null };
   }
 
   function reconcileProgress(currentLesson) {
@@ -289,6 +289,32 @@
     }
   }
 
+  function updateRatingStatus() {
+    const ex = currentExercise();
+    const entry = ex ? progressFor(ex) : null;
+    const last = entry?.lastRating === 'easy' || entry?.lastRating === 'hard'
+      ? entry.lastRating : null;
+    els.easyBtn.classList.toggle('last-rated', last === 'easy');
+    els.hardBtn.classList.toggle('last-rated', last === 'hard');
+    els.easyBtn.setAttribute('aria-label', last === 'easy' ? 'Easy: last rating for this sentence' : 'Rate this sentence Easy');
+    els.hardBtn.setAttribute('aria-label', last === 'hard' ? 'Hard: last rating for this sentence' : 'Rate this sentence Hard');
+    els.easyBtn.textContent = last === 'easy' ? 'Easy ✓' : 'Easy';
+    els.hardBtn.textContent = last === 'hard' ? 'Hard ✓' : 'Hard';
+
+    if (!entry || !last) {
+      els.ratingStatus.textContent = ex ? 'Not rated yet' : 'No sentence selected';
+      return;
+    }
+    // V7.1 stored the most recent rating but NOT its date. In particular,
+    // lastPracticedAt is updated on every completed exercise, so using it as
+    // the rating date would display an incorrect timestamp.
+    const parsed = entry.lastRatedAt ? Date.parse(entry.lastRatedAt) : NaN;
+    const when = Number.isFinite(parsed)
+      ? new Date(parsed).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : 'date unavailable (rated in an earlier version)';
+    els.ratingStatus.textContent = `Last: ${last === 'easy' ? 'Easy' : 'Hard'} · ${when} · Easy ${entry.easy || 0} / Hard ${entry.hard || 0}`;
+  }
+
   function updateUI() {
     els.modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === state.settings.mode));
     els.modeName.textContent = MODE_NAMES[state.settings.mode] || state.settings.mode;
@@ -297,6 +323,7 @@
       els.counter.textContent = '—'; els.progressBar.style.width = '0%'; els.stats.innerHTML = '';
       els.sentenceText.hidden = false; $('statusCard').classList.remove('polish-mode');
       els.sentenceText.textContent = 'No lesson loaded.'; els.translationText.textContent = '';
+      updateRatingStatus();
       return;
     }
     const allForMode = lesson.exercises.filter(x => x.mode === state.settings.mode);
@@ -316,6 +343,7 @@
       els.translationText.textContent = '';
     }
     updateStats();
+    updateRatingStatus();
     updateMediaMetadata();
   }
 
@@ -471,7 +499,7 @@
 
   async function repetitionWindows(token, bonus, warnEveryWindow = false) {
     const reps = Number(state.settings.repetitions || 2);
-    const seconds = Number(state.settings.pauseSeconds || 7) + bonus;
+    const seconds = Number(state.settings.pauseSeconds ?? 7) + bonus;
     for (let i = 1; i <= reps; i++) {
       setPhase(`Repeat ${i}/${reps}`, 'Repeat the English answer aloud');
       const warningSeconds = (i === reps || warnEveryWindow) ? Number(state.settings.endWarningSeconds || 0) : 0;
@@ -502,7 +530,7 @@
       if (!(await speakSafely(ex.promptEn, token))) return;
       beep();
       setPhase('Recall', 'Say the target sentence from memory');
-      if ((await sleep((Number(state.settings.recallSeconds || 7) + bonus) * 1000, token, 'Say the target sentence from memory')) === 'aborted') return;
+      if ((await sleep((Number(state.settings.recallSeconds ?? 7) + bonus) * 1000, token, 'Say the target sentence from memory')) === 'aborted') return;
       displayExercisePart(ex, 'answer');
       setPhase('Model answer', 'Listen and compare');
       if (!(await speakSafely(ex.answerEn, token))) return;
@@ -531,7 +559,7 @@
       if (!(await speakSafely(ex.promptEn, token))) return;
       beep();
       setPhase('Your answer', 'Answer in your own words');
-      if ((await sleep((Number(state.settings.businessSeconds || 15) + bonus) * 1000, token, 'Answer in your own words')) === 'aborted') return;
+      if ((await sleep((Number(state.settings.businessSeconds ?? 15) + bonus) * 1000, token, 'Answer in your own words')) === 'aborted') return;
       displayExercisePart(ex, 'answer');
       setPhase('Model answer', 'Listen to one strong answer');
       if (!(await speakSafely(ex.answerEn, token))) return;
@@ -622,7 +650,7 @@
       const rs = state.settings.hardOnly ? null : roundState();
       navigator.mediaSession.metadata = new MediaMetadata({
         title: `${lesson.title || lesson.id} · ${MODE_NAMES[state.settings.mode] || state.settings.mode}`,
-        artist: 'CEO English Ride Trainer v7.1',
+        artist: 'CEO English Ride Trainer v7.2',
         album: state.settings.hardOnly ? `${queuePos + 1}/${queue.length} · Difficult only` : `${queuePos + 1}/${queue.length} · Round ${rs?.round || 1}`
       });
     } catch {}
@@ -673,10 +701,10 @@
 
   function rateCurrent(kind) {
     const ex = currentExercise(), p = getProgress(); if (!ex || !p) return;
-    const ep = p.exercises[ex.id]; ep[kind] = (ep[kind] || 0) + 1; ep.lastRating = kind; ep.lastPracticedAt = new Date().toISOString();
+    const ep = p.exercises[ex.id]; ep[kind] = (ep[kind] || 0) + 1; ep.lastRating = kind; ep.lastRatedAt = new Date().toISOString(); ep.lastPracticedAt = ep.lastRatedAt;
     ep.score = (ep.easy + ep.hard) ? Number((ep.easy / (ep.easy + ep.hard)).toFixed(3)) : null;
     touchProgress(); saveState(); scheduleServerPush();
-    if (state.settings.hardOnly) buildQueue({ resetPosition: true }); else updateStats();
+    if (state.settings.hardOnly) buildQueue({ resetPosition: true }); else { updateStats(); updateRatingStatus(); }
   }
 
   async function requestWakeLock() {
@@ -1166,9 +1194,26 @@
     loadVoices(); updateUI();
   }
 
+  function validatedNumber(el, fallback) {
+    const value = Number(el.value);
+    if (el.value.trim() === '' || !Number.isFinite(value) || !el.validity.valid) {
+      el.reportValidity();
+      // Never persist an invalid partial input; return to the last saved value.
+      el.value = String(fallback);
+      return null;
+    }
+    return value;
+  }
+
   function bindSetting(el, key, transform = x => x) {
     el.addEventListener('change', () => {
-      state.settings[key] = transform(el.type === 'checkbox' ? el.checked : el.value); saveState();
+      let value;
+      if (el.type === 'number') {
+        value = validatedNumber(el, state.settings[key]);
+        if (value === null) return;
+      } else value = el.type === 'checkbox' ? el.checked : transform(el.value);
+      state.settings[key] = value;
+      saveState();
       if (key === 'hardOnly') buildQueue({ resetPosition: state.settings.hardOnly });
     });
   }
@@ -1198,7 +1243,7 @@
   els.testPolishVoiceBtn.addEventListener('click', () => speak('Zanim ustalimy cel, potrzebujemy punktu odniesienia.', 'pl').catch(() => {}));
   els.voiceSelect.addEventListener('change', () => { state.settings.voiceURI = els.voiceSelect.value; saveState(); showVoiceInfo(); });
   els.polishVoiceSelect.addEventListener('change', () => { state.settings.plVoiceURI = els.polishVoiceSelect.value; saveState(); showVoiceInfo(); });
-  els.speechRate.addEventListener('input', () => { state.settings.speechRate = Number(els.speechRate.value); els.speechRateValue.value = `${state.settings.speechRate.toFixed(2)}×`; saveState(); });
+  els.speechRate.addEventListener('change', () => { const rate = validatedNumber(els.speechRate, state.settings.speechRate); if (rate === null) return; state.settings.speechRate = rate; els.speechRateValue.value = `${rate.toFixed(2)}×`; saveState(); });
 
   bindSetting(els.repetitionCount, 'repetitions', Number);
   bindSetting(els.pauseSeconds, 'pauseSeconds', Number);
