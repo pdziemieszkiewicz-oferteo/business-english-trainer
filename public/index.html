@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="Hands-free Business English trainer with Repeat, Active Recall, Business Response and Translate & Recall modes." />
+  <title>CEO English Ride Trainer v7.0</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css?v=7.0" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Business English</p>
+        <h1>Ride Trainer <span class="app-version">v7.0</span></h1>
+      </div>
+      <div class="top-actions">
+        <span id="syncBadge" class="sync-badge" title="Server sync status">Progress: local</span>
+        <button id="installBtn" class="ghost" title="Install this trainer as an app on this device" hidden>Install app</button>
+      </div>
+    </header>
+
+
+    <section class="card status-card" id="statusCard">
+      <div class="progress-row">
+        <span id="counter">—</span>
+        <span id="phaseLabel">Ready</span>
+      </div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <div id="modeName" class="mode-name">Repeat</div>
+      <p id="sentenceText" class="sentence">Loading lesson…</p>
+      <p id="translationText" class="translation"></p>
+      <div class="timer-wrap">
+        <div id="timer" class="timer">—</div>
+        <div id="timerHint" class="timer-hint"></div>
+      </div>
+    </section>
+
+    <section class="controls primary-controls" aria-label="Playback controls">
+      <button id="prevBtn" aria-label="Previous exercise">⏮</button>
+      <button id="playBtn" class="play" aria-label="Start or pause">▶</button>
+      <button id="repeatBtn" aria-label="Repeat exercise">↻</button>
+      <button id="nextBtn" aria-label="Next exercise">⏭</button>
+    </section>
+
+    <section class="card lesson-card compact-card">
+      <div class="lesson-row">
+        <div class="lesson-picker-wrap">
+          <span class="label">Lesson</span>
+          <select id="lessonSelect" class="lesson-select" aria-label="Lesson"></select>
+          <span id="lessonMeta" class="muted small"></span>
+        </div>
+        <div class="mode-tabs" role="group" aria-label="Training mode">
+          <button class="mode-btn active" data-mode="R" title="Repeat">R</button>
+          <button class="mode-btn" data-mode="A" title="Active Recall">A</button>
+          <button class="mode-btn" data-mode="B" title="Business Response">B</button>
+          <button class="mode-btn" data-mode="P" title="Translate & Recall: Polish to English">PL</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls rating-controls">
+      <button id="easyBtn" class="secondary" title="Mark this exercise as easy">Easy</button>
+      <button id="hardBtn" class="secondary" title="Mark this exercise as difficult">Hard</button>
+      <button id="rideScreenBtn" class="secondary">Ride screen</button>
+    </section>
+
+    <details class="card settings">
+      <summary>Training settings</summary>
+
+      <label>
+        English voice
+        <select id="voiceSelect"></select>
+      </label>
+      <div class="row compact">
+        <button id="testVoiceBtn" class="secondary">Test voice</button>
+        <span id="voiceInfo" class="muted small"></span>
+      </div>
+
+      <label>
+        Polish voice (PL → EN mode)
+        <select id="polishVoiceSelect"></select>
+      </label>
+      <div class="row compact">
+        <button id="testPolishVoiceBtn" class="secondary">Test Polish voice</button>
+        <span id="polishVoiceInfo" class="muted small"></span>
+      </div>
+
+      <label class="check">
+        <input id="showEnglishInPL" type="checkbox" checked />
+        Show English below Polish immediately (PL mode)
+      </label>
+      <p class="small muted">Turn off to reveal English only after your recall attempt.</p>
+
+      <label>
+        Speech rate
+        <div class="range-row">
+          <input id="speechRate" type="range" min="0.65" max="1.25" step="0.05" value="0.9" />
+          <output id="speechRateValue">0.90×</output>
+        </div>
+      </label>
+
+      <label>
+        Repeat-mode repetitions
+        <select id="repetitionCount">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+        </select>
+      </label>
+
+      <label>
+        Pause per repetition
+        <select id="pauseSeconds">
+          <option value="5">5 s</option>
+          <option value="7" selected>7 s</option>
+          <option value="9">9 s</option>
+          <option value="12">12 s</option>
+          <option value="15">15 s</option>
+        </select>
+      </label>
+
+      <label>
+        Active Recall answer time
+        <select id="recallSeconds">
+          <option value="5">5 s</option>
+          <option value="7" selected>7 s</option>
+          <option value="10">10 s</option>
+          <option value="12">12 s</option>
+        </select>
+      </label>
+
+      <label>
+        Polish → English recall pause
+        <select id="translationSeconds">
+          <option value="3">3 s</option>
+          <option value="5" selected>5 s</option>
+          <option value="7">7 s</option>
+          <option value="10">10 s</option>
+          <option value="12">12 s</option>
+          <option value="15">15 s</option>
+        </select>
+      </label>
+
+      <label>
+        Business Response answer time
+        <select id="businessSeconds">
+          <option value="10">10 s</option>
+          <option value="15" selected>15 s</option>
+          <option value="20">20 s</option>
+          <option value="25">25 s</option>
+        </select>
+      </label>
+
+      <label>
+        Quiet warning before next phrase
+        <select id="endWarningSeconds">
+          <option value="0">Off</option>
+          <option value="1">1 s</option>
+          <option value="2" selected>2 s</option>
+          <option value="3">3 s</option>
+          <option value="4">4 s</option>
+          <option value="5">5 s</option>
+        </select>
+      </label>
+
+      <label class="check"><input id="beepEnabled" type="checkbox" checked /> Beep between speaking windows</label>
+      <label class="check"><input id="shuffleEnabled" type="checkbox" /> Shuffle exercises with the same repetition count</label>
+      <label class="check"><input id="hardOnly" type="checkbox" /> Difficult exercises only</label>
+      <label class="check"><input id="wakeLockEnabled" type="checkbox" checked /> Keep screen awake during training</label>
+      <label class="check"><input id="mediaControlsEnabled" type="checkbox" checked /> Headset controls & Android audio focus</label>
+    </details>
+
+    <details class="card settings">
+      <summary>Lessons & Cloudflare sync</summary>
+
+      <p class="small muted">Lessons are loaded from <code>lessons/index.json</code> on the server. Local import is kept only as a fallback.</p>
+
+      <div class="button-grid">
+        <button id="refreshLessonsBtn" class="secondary">Refresh lessons from server</button>
+        <label class="file-button secondary-like">
+          Import local lesson
+          <input id="lessonFile" type="file" accept=".txt,text/plain" hidden />
+        </label>
+      </div>
+
+      <label>
+        Sync key
+        <input id="syncKeyInput" class="text-input" type="password" autocomplete="off" placeholder="Use the same key on every device" />
+      </label>
+      <div class="row compact wrap">
+        <button id="generateSyncKeyBtn" class="secondary">Generate key</button>
+        <button id="saveSyncKeyBtn" class="secondary">Save key & sync</button>
+        <button id="copySyncKeyBtn" class="secondary">Copy key</button>
+      </div>
+      <p id="syncInfo" class="small muted">Cloudflare D1 sync is not configured yet.</p>
+      <div class="row compact wrap">
+        <button id="syncNowBtn" class="secondary">Sync now</button>
+        <button id="exportBackupBtn" class="secondary" hidden>Export preserved local backup</button>
+      </div>
+      <div id="syncConflict" class="sync-conflict" hidden role="status" aria-live="polite">
+        <p id="syncConflictText"></p>
+        <div class="row compact wrap">
+          <button id="useServerBtn" class="secondary">Keep cloud progress</button>
+          <button id="useDeviceBtn" class="secondary">Replace server with this device</button>
+        </div>
+      </div>
+
+      <div class="button-grid">
+        <button id="exportProgressBtn" class="secondary">Export progress JSON</button>
+        <label class="file-button secondary-like">
+          Import progress JSON
+          <input id="progressFile" type="file" accept=".json,application/json" hidden />
+        </label>
+        <button id="resetProgressBtn" class="danger-link">Reset current lesson progress</button>
+      </div>
+      <div id="stats" class="stats"></div>
+    </details>
+
+    <details class="card help">
+      <summary>Modes</summary>
+      <p><strong>R — Repeat:</strong> hear the English sentence, then repeat it during the silent windows.</p>
+      <p><strong>A — Active Recall:</strong> hear a cue, answer from memory, then hear the target answer and repeat it.</p>
+      <p><strong>B — Business Response:</strong> hear a business question, answer freely, then hear a model answer and repeat it.</p>
+      <p><strong>PL — Translate & Recall:</strong> hear the Polish sentence (Polish voice), recall it in English during the configurable pause, hear the English answer (English voice), then repeat it. The same warning tone sounds before both kinds of pause end. Progress and Easy/Hard are tracked separately from R/A/B.</p>
+      <p><strong>Polish translations</strong> are displayed below English in R/A/B. In PL mode, Polish appears above a smaller English translation. You can choose whether English is visible immediately or revealed after the recall pause.</p>
+      <p><strong>Rounds:</strong> each mode keeps its own round and exact position. Closing or refreshing the app resumes the same place. A new round prioritizes the least-practised exercises.</p>
+      <p><strong>Manual navigation:</strong> Repeat, Previous and Next immediately start continuous playback. The manually selected exercise gets 2 extra seconds in each answer/repetition window.</p>
+      <p><strong>Headset controls:</strong> when supported by Android/browser, Play/Pause, Previous and Next media commands control the trainer. The app also plays a silent media carrier while training to improve headset routing and Android audio-focus behavior.</p>
+      <p><strong>Easy / Hard:</strong> mark your subjective difficulty. They do not increase the repetition counter; the Hard-only setting uses these ratings.</p>
+      <p><strong>Progress: local:</strong> your statistics are stored only in this browser. With server sync configured, the badge changes to a server/sync status.</p>
+      <p><strong>Install app:</strong> installs the PWA on the current device. It appears only when the browser offers installation.</p>
+    </details>
+  </main>
+
+  <div id="rideOverlay" class="ride-overlay" hidden role="button" tabindex="0" aria-label="Exit ride screen">
+    <div class="ride-overlay-content">
+      <div class="ride-dot"></div>
+      <div id="rideOverlayStatus">Ride screen · tap to exit</div>
+    </div>
+  </div>
+
+  <script src="app.js?v=7.0"></script>
+</body>
+</html>
