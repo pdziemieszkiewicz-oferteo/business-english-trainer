@@ -25,7 +25,7 @@
 
   const STORE_KEY = 'ceoEnglishRideTrainerV6';
   const LEGACY_STORE_KEY = 'ceoEnglishRideTrainerV5';
-  const APP_VERSION = '7.0';
+  const APP_VERSION = '7.1';
   const MANUAL_REPLAY_BONUS_SECONDS = 2;
   const MODE_NAMES = { R: 'Repeat', A: 'Active Recall', B: 'Business Response', P: 'Translate & Recall (PL → EN)' };
 
@@ -622,7 +622,7 @@
       const rs = state.settings.hardOnly ? null : roundState();
       navigator.mediaSession.metadata = new MediaMetadata({
         title: `${lesson.title || lesson.id} · ${MODE_NAMES[state.settings.mode] || state.settings.mode}`,
-        artist: 'CEO English Ride Trainer v7.0',
+        artist: 'CEO English Ride Trainer v7.1',
         album: state.settings.hardOnly ? `${queuePos + 1}/${queue.length} · Difficult only` : `${queuePos + 1}/${queue.length} · Round ${rs?.round || 1}`
       });
     } catch {}
@@ -886,12 +886,15 @@
   }
   async function casWrite(lessonId, data, expectedRevision) {
     const r = await fetch('/api/progress', {
-      method: 'POST', headers: baseApiHeaders(), cache: 'no-store', keepalive: true,
+      method: 'POST', headers: baseApiHeaders(), cache: 'no-store', // Do NOT use keepalive: large lesson progress can exceed its 64 KiB browser cap.
       body: JSON.stringify({ lessonId, data, expectedRevision })
     });
-    if (!r.ok) throw new Error(r.status === 503
-      ? 'Cloudflare D1 is not initialized. Create the database and run schema.sql'
-      : `Cloudflare server write failed (HTTP ${r.status})`);
+    if (!r.ok) {
+      const serverError = await r.clone().json().catch(() => null);
+      throw new Error(serverError?.error || (r.status === 503
+        ? 'Cloudflare D1 is unavailable. Check the Worker binding and database.'
+        : `Cloudflare server write failed (HTTP ${r.status})`));
+    }
     return await r.json(); // {status:'ok',revision} or {status:'conflict',revision,data}
   }
   function acceptRemote(id, record, backupReason = '') {
